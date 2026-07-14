@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t">
+  <title id="t">Nike Air Zoom Pegasus 40 — ตัวอย่างรูป (placeholder)</title>
+  <rect width="600" height="600" fill="#F2F2F2"/>
+  <g transform="translate(300 300) rotate(0) scale(1) translate(-300 -300)">
+    <ellipse cx="290" cy="404" rx="230" ry="16" fill="#000" opacity="0.05"/>
+    <path d="M60 300 C60 300 96 296 118 288 C140 280 152 268 176 252 C200 236 220 224 248 220 C268 217 282 224 296 238 L330 274 C344 288 362 298 386 304 L470 322 C500 329 516 342 520 360 C523 375 514 386 496 388 L92 388 C72 388 60 376 60 356 Z" fill="#D8D8DC"/>
+    <path d="M60 356 L520 360 C523 375 514 386 496 388 L92 388 C72 388 60 376 60 356 Z" fill="#C4C4CB"/>
+    <path d="M248 220 C268 217 282 224 296 238 L330 274 L286 300 L232 250 Z" fill="#CACAD1"/>
+    <circle cx="180" cy="300" r="7" fill="#B6B6BE"/>
+    <circle cx="214" cy="286" r="7" fill="#B6B6BE"/>
+    <circle cx="248" cy="274" r="7" fill="#B6B6BE"/>
+  </g>
+  <text x="300" y="474" font-family="Kanit, 'Segoe UI', Tahoma, sans-serif" font-size="30" font-weight="700"
+        fill="#5A5A66" text-anchor="middle">NIKE</text>
+  <text x="300" y="510" font-family="Anuphan, 'Segoe UI', Tahoma, sans-serif" font-size="22"
+        fill="#8A8A96" text-anchor="middle">Air Zoom Pegasus 40 · EU 43</text>
+  <text x="300" y="552" font-family="Anuphan, 'Segoe UI', Tahoma, sans-serif" font-size="17" letter-spacing="1"
+        fill="#A6A6B2" text-anchor="middle">มุมข้าง / SIDE · 1/2 · ตัวอย่างรูป</text>
+</svg>
