@@ -1,0 +1,48 @@
+name: Validate
+
+# The site has no build and no backend, so this workflow is the only thing
+# standing between a typo in shoes.json and a broken catalog in production.
+# It runs on every PR and on every push to main.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate-shoes:
+    name: Validate shoes.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          # No `cache: npm` and no `npm ci`: the validator is dependency-free by
+          # design, so there is no lockfile to cache and nothing to install.
+
+      - name: Validate data/shoes.json
+        run: node scripts/validate-shoes.js
+
+      - name: Check every photo path in shoes.json exists on disk
+        # A path that resolves in the editor but not in the repo (wrong case on a
+        # case-sensitive server, or a file never committed) ships as a broken
+        # image. Linux runners are case-sensitive, so this catches what a
+        # Windows machine cannot.
+        run: |
+          node -e '
+            const fs = require("fs");
+            const shoes = JSON.parse(fs.readFileSync("data/shoes.json", "utf8"));
+            const missing = [];
+            for (const shoe of shoes) {
+              for (const photo of shoe.photos) {
+                if (!fs.existsSync(photo)) missing.push(`${shoe.id} → ${photo}`);
+              }
+            }
+            if (missing.length) {
+              console.error("✖ Missing photo files:\n  " + missing.join("\n  "));
+              process.exit(1);
+            }
+            const total = shoes.reduce((n, s) => n + s.photos.length, 0);
+            console.log(`✔ all ${total} photo paths exist`);
+          '

@@ -1,0 +1,17 @@
+# Impeccable machine-local config — may contain per-machine paths/consent state.
+*.local.json
+
+# Design inspiration input, not a site dependency. Read-only, never deployed.
+_reference/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Node — only used by scripts/validate-shoes.js (which is dependency-free),
+# but keep this here so a stray `npm install` never lands in the repo.
+node_modules/
+npm-debug.log*
