@@ -2,7 +2,7 @@
 
 [![Validate](https://github.com/chatreekengpipat/secondhand-kicks/actions/workflows/validate.yml/badge.svg)](https://github.com/chatreekengpipat/secondhand-kicks/actions/workflows/validate.yml)
 
-A static catalog site for a Thai secondhand sneaker shop — casual and running shoes.
+A static catalog site for a second-hand sneaker shop — casual and running shoes.
 Browse, filter by brand / size / price, open a shoe, and order through LINE.
 
 No framework. No build step. No backend. Clone it, serve it, it works.
@@ -21,8 +21,8 @@ npx serve
 
 Then open the URL it prints.
 
-> **Double-clicking `index.html` will not work** — and the page will tell you so in
-> Thai, with the command to run. Browsers block reading local data files from
+> **Double-clicking `index.html` will not work** — and the page will tell you so,
+> with the exact command to run. Browsers block reading local data files from
 > `file://` for security, and this site keeps its catalog in `data/shoes.json`.
 > On GitHub Pages (where it actually lives) it works normally.
 > The full reasoning is in [DECISIONS.md §6](DECISIONS.md).
@@ -50,12 +50,12 @@ photos/nike-vomero-17-eu43/2.jpg
   "model": "Zoom Vomero 17",
   "sizeEU": 43,
   "sizeUS": "9.5",
-  "condition": { "grade": "B", "note": "ใช้งานปกติ พื้นยังเด้งดี" },
+  "condition": { "grade": "B", "note": "Normal use. Foam still springy." },
   "price": 2390,
   "originalPrice": 5200,
   "status": "available",
   "photos": ["photos/nike-vomero-17-eu43/1.jpg", "photos/nike-vomero-17-eu43/2.jpg"],
-  "notes": "รองเท้าวิ่งพื้นนุ่ม เหมาะกับวิ่งยาว มีรอยเปื้อนเล็กน้อยที่ผ้า",
+  "notes": "Soft-riding trainer, good for long runs. Light staining on the mesh.",
   "dateAdded": "2026-07-14"
 }
 ```
@@ -92,12 +92,12 @@ order button is disabled.
 | `model` | ✅ | |
 | `sizeEU` | ✅ | A number. Creates the size chip automatically. |
 | `sizeUS` | ✅ | A **string** — `"8.5"`, `"9-9.5"`. |
-| `condition` | ✅ | `{ "grade": "A"\|"B"\|"C", "note": "…" }` — grade plus a short Thai note. |
-| `price` | ✅ | Number, greater than 0. Thai baht. |
+| `condition` | ✅ | `{ "grade": "A"\|"B"\|"C", "note": "…" }` — grade plus a short note on the wear. |
+| `price` | ✅ | Number, greater than 0. Thai baht — rendered as ฿2,490. |
 | `originalPrice` | ➖ | Optional. Must be **higher** than `price`. Shows the strike-through and the saving. |
 | `status` | ✅ | `available` \| `reserved` \| `sold` |
 | `photos` | ✅ | At least one. Relative paths. The first one is the card image. |
-| `notes` | ✅ | Thai. Shown in the detail popup. |
+| `notes` | ✅ | Shown in the detail popup. |
 | `dateAdded` | ✅ | `YYYY-MM-DD`. Must be a real date. |
 
 Get any of this wrong and `node scripts/validate-shoes.js` tells you exactly which
@@ -148,7 +148,7 @@ state, not a broken one**:
 
 | Setting | When it's empty | When you fill it in |
 |---|---|---|
-| `line` | The order button renders **disabled** — "ยังไม่เปิดรับสั่งซื้อ". It never becomes a link that goes nowhere. The LINE links in the nav and footer remove themselves. | The button becomes a real LINE link and the nav/footer links come back. |
+| `line` | The order button renders **disabled** — "Ordering not open yet". It never becomes a link that goes nowhere. The LINE links in the nav and footer remove themselves. | The button becomes a real LINE link and the nav/footer links come back. |
 | `instagram` | The Instagram link isn't rendered. | It appears in the footer. |
 
 Paste a real URL in and everything starts working. **No other file needs to change.**

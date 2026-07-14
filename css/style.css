@@ -32,20 +32,40 @@
   --accent-2: #00b2ff;
   --amber: #ffb020;
 
+  /* Derived from the two accents. These exist because #00B2FF is a *fill* colour:
+     as text on a dark surface it sits under 4.5:1, so it is lightened for anything
+     you have to actually read. Named here rather than pasted as raw hex at each
+     use site — see DESIGN.md, "Colors". */
+  --accent-2-text: #6fd3ff;   /* secondary-accent TEXT on dark (badges, status) */
+  --accent-2-bright: #5cd0ff; /* secondary-accent hover (links) */
+
+  /* A control that exists but cannot be used — a sold shoe's order button.
+     Deliberately not an accent: a disabled CTA must not look clickable. */
+  --surface-disabled: #23232d;
+
   /* Photo plate. Secondhand photos come from many phones and many rooms; a
      fixed light plate behind them makes a mixed set look like one catalog. */
   --photo-bg: #f2f2f2;
+  /* Thumbnails sit ON the plate, so they need to be one step brighter than it or
+     they disappear into their own background. */
+  --photo-plate-raised: #ffffff;
+
+  /* Inline <code> in the error state. Pure black is the only value that reads as
+     "terminal" against --surface without inventing a sixth grey. */
+  --code-bg: #000000;
 
   /* Glow — the signature effect. Kept to box-shadow only (compositor-friendly);
      no filters, no animated backgrounds. */
   --glow: 0 0 0 1px rgba(255, 94, 0, 0.5), 0 6px 28px -6px rgba(255, 94, 0, 0.55);
   --glow-strong: 0 0 0 1px rgba(255, 94, 0, 0.7), 0 10px 38px -6px rgba(255, 94, 0, 0.75);
 
-  /* Type. Kanit for display (Thai + Latin, heavy weights hold up at large size);
-     Anuphan for body (taller x-height, easier Thai reading at 16px).
-     Fallbacks are explicit so Thai still renders if Google Fonts is blocked. */
-  --font-display: "Kanit", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
-  --font-body: "Anuphan", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
+  /* Type. Kanit for display: its heavy weights are geometric and slightly
+     condensed, which is what lets a four-word quote fill a phone screen without
+     wrapping into mush. Anuphan for body: taller x-height, easier at 16px.
+     Both keep their full Thai coverage, so re-adding Thai copy later costs a
+     font swap of exactly zero. */
+  --font-display: "Kanit", "Segoe UI", Tahoma, sans-serif;
+  --font-body: "Anuphan", "Segoe UI", Tahoma, sans-serif;
 
   /* Scale */
   --step-0: 1rem;
@@ -73,6 +93,20 @@
 
 * { margin: 0; }
 
+/* `hidden` must actually hide. This looks like a redundant reset and is not.
+   `[hidden] { display: none }` lives in the browser's UA stylesheet, and ANY
+   author rule beats a UA rule regardless of specificity — so the moment you give
+   an element a display (`.modal { display: flex }`, `.filters { display: grid }`,
+   `.btn { display: inline-flex }`), its `hidden` attribute silently stops working.
+
+   For the modal that is not cosmetic but catastrophic: it is `position: fixed;
+   inset: 0`, so an un-hidden modal covers the viewport, dims the page with its
+   backdrop, and swallows every click on the site.
+
+   !important is deliberate. `hidden` means hidden; nothing should be able to
+   out-argue it, including a future rule nobody has written yet. */
+[hidden] { display: none !important; }
+
 html {
   scroll-behavior: smooth;
   /* The nav is sticky; without this, #catalog lands under it. */
@@ -86,7 +120,7 @@ body {
   font-family: var(--font-body);
   font-size: var(--step-0);
   font-weight: 400;
-  line-height: 1.65; /* Thai has tall ascenders + tone marks; 1.65 stops clipping */
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   min-height: 100dvh;
 }
@@ -102,7 +136,7 @@ ul, ol { list-style: none; padding: 0; }
 button { font: inherit; color: inherit; }
 
 a { color: var(--accent-2); text-decoration-thickness: 1px; text-underline-offset: 3px; }
-a:hover { color: #5cd0ff; }
+a:hover { color: var(--accent-2-bright); }
 
 /* One focus style everywhere, in the secondary accent. Blue reads as
    "system/interaction" and never competes with an orange CTA for meaning. */
@@ -179,7 +213,7 @@ a:hover { color: #5cd0ff; }
 /* Disabled CTA (a sold shoe). Not a link at all — see app.js. */
 .btn[aria-disabled="true"],
 .btn:disabled {
-  background: #23232d;
+  background: var(--surface-disabled);
   color: var(--text-muted);
   box-shadow: none;
   border-color: var(--border);
@@ -233,7 +267,7 @@ a:hover { color: #5cd0ff; }
 .badge--available {
   background: rgba(0, 178, 255, 0.12);
   border-color: rgba(0, 178, 255, 0.35);
-  color: #6fd3ff;
+  color: var(--accent-2-text);
 }
 /* Reserved = outlined amber: "wait", visually distinct from both accents. */
 .badge--reserved {
@@ -250,7 +284,7 @@ a:hover { color: #5cd0ff; }
 .badge--size {
   background: rgba(0, 178, 255, 0.1);
   border-color: rgba(0, 178, 255, 0.3);
-  color: #6fd3ff;
+  color: var(--accent-2-text);
 }
 .badge--grade {
   background: rgba(255, 255, 255, 0.06);
@@ -417,18 +451,101 @@ a:hover { color: #5cd0ff; }
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 0.875rem;
-  margin-bottom: 1.25rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
 }
-.hero__title {
-  font-size: var(--step-4);
+
+/* ---------- 5a. The hero quote ------------------------------------------- */
+/* The quote is the whole first impression, so it is the largest thing on the
+   site and it is the only element that gets a scripted entrance. */
+
+.quote { margin: 0 auto; }
+
+.quote__mark {
+  display: block;
+  font-family: var(--font-display);
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
-}
-.hero__accent {
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  line-height: 0.7;
   color: var(--accent);
-  text-shadow: 0 0 34px rgba(255, 94, 0, 0.45);
+  opacity: 0.4;
+  margin-bottom: 0.15em;
 }
+/* The largest type in the system, by a wide margin — this is the first thing
+   anyone reads. The lower clamp bound is set so "Never second-best." still fits
+   on one line at 360px; any bigger and the payoff line wraps and loses its punch. */
+.quote__text {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.1rem, 8.5vw, 4.75rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+.quote__line { display: block; }
+
+/* The payoff line. Orange = the thing that matters, per the accent rules. */
+.quote__line--accent {
+  position: relative;
+  display: inline-block;
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(255, 94, 0, 0.4);
+}
+/* Underline that draws itself in after the words land. scaleX is a transform,
+   so this is composited — a width animation here would relayout every frame. */
+.quote__line--accent::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.04em;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: 0 0 16px 1px rgba(255, 94, 0, 0.75);
+  transform: scaleX(0);
+  transform-origin: left center;
+  animation: underline-draw 620ms var(--ease) 780ms forwards;
+}
+
+/* Each word is a clipping box with the word inside it; the word slides up out of
+   the box. Only `transform` and `opacity` animate, so the compositor does all the
+   work and no frame ever triggers layout.
+
+   `backwards` fill is load-bearing: it applies the keyframe's from-state during
+   the delay. The base (un-animated) state is therefore the FINAL state — so if
+   animations never run at all, the words are simply visible, not stuck offscreen. */
+.word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* Descenders (the 'y' in "Every") would otherwise be clipped by overflow:hidden.
+     Pad the box, then pull the padding back out of the layout. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.word > span {
+  display: inline-block;
+  animation: word-rise 820ms var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* Everything else in the hero just rises and fades, staggered behind the quote. */
+.reveal {
+  animation: reveal-up 700ms var(--ease) backwards;
+  animation-delay: calc(var(--i, 0) * 90ms + 120ms);
+}
+
+@keyframes word-rise {
+  from { transform: translateY(115%); opacity: 0; }
+}
+@keyframes reveal-up {
+  from { transform: translateY(16px); opacity: 0; }
+}
+@keyframes underline-draw {
+  to { transform: scaleX(1); }
+}
+
 .hero__subtitle {
   max-width: 46ch;
   margin: 1.25rem auto 0;
@@ -514,7 +631,7 @@ a:hover { color: #5cd0ff; }
   text-underline-offset: 3px;
   white-space: nowrap;
 }
-.filters__reset:hover { color: #5cd0ff; }
+.filters__reset:hover { color: var(--accent-2-bright); }
 
 /* States */
 .state {
@@ -553,7 +670,7 @@ a:hover { color: #5cd0ff; }
 .state__body code {
   display: inline-block;
   padding: 0.1rem 0.4rem;
-  background: #000;
+  background: var(--code-bg);
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: 0.875rem;
@@ -854,7 +971,7 @@ a:hover { color: #5cd0ff; }
   width: 64px;
   height: 64px;
   padding: 2px;
-  background: #fff;
+  background: var(--photo-plate-raised);
   border: 2px solid transparent;
   border-radius: 10px;
   cursor: pointer;
@@ -935,6 +1052,12 @@ a:hover { color: #5cd0ff; }
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Zeroing the delay matters as much as zeroing the duration. The hero words
+       use `animation-fill-mode: backwards`, which holds the from-state (hidden,
+       shifted down) for the whole delay. Kill the duration but leave a 780ms
+       delay in place and the quote sits INVISIBLE and then pops — the exact jolt
+       reduced-motion exists to prevent. With both at zero it is simply there. */
+    animation-delay: 0s !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;

@@ -133,7 +133,7 @@ function validateShoe(shoe, index, seenIds) {
         fail(label, `"condition.grade" must be one of ${VALID_GRADES.join(', ')} (got ${JSON.stringify(c.grade)})`);
       }
       if (!isNonEmptyString(c.note)) {
-        fail(label, '"condition.note" must be a non-empty string (short Thai description)');
+        fail(label, '"condition.note" must be a non-empty string (a short description of the wear)');
       }
     }
   }
