@@ -13,9 +13,31 @@
 (function () {
   /* ---------- Config ------------------------------------------------------ */
 
-  // Owner-filled. Kept as one constant instead of being scattered through the
-  // markup, so there is exactly one place to change when the shop's LINE moves.
-  const LINE_URL = '[CONFIRM: LINE OA or line.me link]';
+  /**
+   * The shop's identity. THIS IS THE ONLY PLACE TO EDIT IT — the name, the LINE
+   * link and the Instagram link are all read from here and written into the page
+   * at load. Change a value here and it updates everywhere it appears.
+   *
+   * An empty string means "the shop does not have this yet", and that is a
+   * supported state, not a broken one:
+   *   - no `line`      → the order button renders disabled, saying orders aren't
+   *                      open yet. It never becomes a link that goes nowhere.
+   *   - no `instagram` → the Instagram link is simply not rendered.
+   *
+   * The moment a real URL is pasted in, the button and links start working. No
+   * other file needs to be touched.
+   */
+  const SHOP = {
+    name: 'Second Kick',
+
+    // [CONFIRM: LINE OA or line.me link] — e.g. 'https://line.me/R/ti/p/@abc1234'
+    // Leave '' until the shop's LINE actually exists.
+    line: '',
+
+    // [CONFIRM: IG handle] — e.g. 'https://instagram.com/secondkick.bkk'
+    // Leave '' if the shop has no Instagram.
+    instagram: '',
+  };
 
   const DATA_URL = './data/shoes.json';
 
@@ -365,24 +387,44 @@
       });
     }
 
-    const cta = sold
-      ? h('button', {
-          class: 'btn btn--primary btn--block detail__cta',
-          text: 'ขายไปแล้ว',
-          attrs: { type: 'button', disabled: 'disabled' },
-        })
-      : h('a', {
-          class: 'btn btn--primary btn--block detail__cta',
-          text: shoe.status === 'reserved' ? 'ทัก LINE เพื่อขอคิวถัดไป' : 'สั่งซื้อทาง LINE',
-          attrs: { href: LINE_URL, target: '_blank', rel: 'noopener noreferrer' },
-        });
+    // Three states, in priority order. The middle one is the reason SHOP.line can
+    // be empty: a shop without a LINE yet gets an honest disabled button, never an
+    // <a> pointing at nothing. A buy button that goes nowhere costs more trust
+    // than a button that admits the shop isn't taking orders yet.
+    let cta;
+    let hint;
 
-    const hint = sold
-      ? h('p', { class: 'detail__hint', text: 'คู่นี้ขายไปแล้วครับ ลองดูคู่อื่นที่ยังว่างอยู่ได้เลย' })
-      : h('p', { class: 'detail__hint' }, [
-          document.createTextNode('แจ้งรหัสนี้กับทางร้านได้เลย: '),
-          h('span', { class: 'detail__id', text: shoe.id }),
-        ]);
+    if (sold) {
+      cta = h('button', {
+        class: 'btn btn--primary btn--block detail__cta',
+        text: 'ขายไปแล้ว',
+        attrs: { type: 'button', disabled: 'disabled' },
+      });
+      hint = h('p', {
+        class: 'detail__hint',
+        text: 'คู่นี้ขายไปแล้วครับ ลองดูคู่อื่นที่ยังว่างอยู่ได้เลย',
+      });
+    } else if (!SHOP.line) {
+      cta = h('button', {
+        class: 'btn btn--primary btn--block detail__cta',
+        text: 'ยังไม่เปิดรับสั่งซื้อ',
+        attrs: { type: 'button', disabled: 'disabled' },
+      });
+      hint = h('p', {
+        class: 'detail__hint',
+        text: 'ร้านกำลังเตรียมเปิด LINE สำหรับสั่งซื้อ เร็ว ๆ นี้ครับ',
+      });
+    } else {
+      cta = h('a', {
+        class: 'btn btn--primary btn--block detail__cta',
+        text: shoe.status === 'reserved' ? 'ทัก LINE เพื่อขอคิวถัดไป' : 'สั่งซื้อทาง LINE',
+        attrs: { href: SHOP.line, target: '_blank', rel: 'noopener noreferrer' },
+      });
+      hint = h('p', { class: 'detail__hint' }, [
+        document.createTextNode('แจ้งรหัสนี้กับทางร้านได้เลย: '),
+        h('span', { class: 'detail__id', text: shoe.id }),
+      ]);
+    }
 
     const info = h('div', { class: 'detail__info' }, [
       h('p', { class: 'detail__brand', text: shoe.brand }),
@@ -480,7 +522,40 @@
     }
   }
 
+  /* ---------- Shop identity ----------------------------------------------- */
+
+  /**
+   * Writes SHOP into the page. Runs before anything else renders, so the shop
+   * name is never briefly wrong and a LINE link that doesn't exist is never
+   * briefly clickable.
+   */
+  function applyShopIdentity() {
+    for (const node of document.querySelectorAll('[data-shop-name]')) {
+      node.textContent = SHOP.name;
+    }
+    // Keep the tab/SEO title in step with the name, so it lives in one place too.
+    document.title = `${SHOP.name} — รองเท้ามือสอง สภาพดี คัดมาแล้ว`;
+
+    // A social link the shop doesn't have is removed, not left pointing nowhere.
+    for (const node of document.querySelectorAll('[data-shop-link]')) {
+      const url = SHOP[node.dataset.shopLink];
+      if (url) {
+        node.href = url;
+      } else {
+        // Drop the whole <li>/wrapper, not just the <a>, or the footer keeps an
+        // empty bullet and the nav keeps a dead gap.
+        (node.closest('[data-shop-link-item]') || node).remove();
+      }
+    }
+
+    // If every social link was removed, the list itself is now an empty box.
+    const links = document.getElementById('footer-links');
+    if (links && links.children.length === 0) links.remove();
+  }
+
   /* ---------- Wire up ----------------------------------------------------- */
+
+  applyShopIdentity();
 
   for (const node of document.querySelectorAll('[data-close-modal]')) {
     node.addEventListener('click', closeModal);
