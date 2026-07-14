@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>[CONFIRM: shop name] — รองเท้ามือสอง สภาพดี คัดมาแล้ว</title>
+  <!-- Kept in sync with SHOP.name in js/app.js, which is the source of truth.
+       Hardcoded here too so the browser tab is right before JS runs. -->
+  <title>Second Kick — รองเท้ามือสอง สภาพดี คัดมาแล้ว</title>
   <meta name="description" content="รองเท้าผ้าใบมือสองคัดสภาพ ทั้งสายลำลองและสายวิ่ง ราคาจริง รูปจริง สั่งซื้อผ่าน LINE ได้เลย">
   <meta name="theme-color" content="#0B0B10">
 
@@ -27,7 +29,7 @@
     <div class="nav__inner">
       <a class="nav__brand" href="./index.html">
         <span class="nav__mark" aria-hidden="true"></span>
-        <span class="nav__name">[CONFIRM: shop name]</span>
+        <span class="nav__name" data-shop-name>Second Kick</span>
       </a>
 
       <button
@@ -43,7 +45,9 @@
       <nav class="nav__menu" id="nav-menu" aria-label="เมนูหลัก">
         <a href="#catalog">รองเท้าทั้งหมด</a>
         <a href="#how-to-order">วิธีสั่งซื้อ</a>
-        <a class="nav__line" href="[CONFIRM: LINE OA or line.me link]" target="_blank" rel="noopener noreferrer">
+        <!-- href is filled from SHOP.line at load. If the shop has no LINE yet,
+             this link removes itself rather than pointing at nothing. -->
+        <a class="nav__line" data-shop-link="line" target="_blank" rel="noopener noreferrer">
           สั่งซื้อทาง LINE
         </a>
       </nav>
@@ -152,18 +156,21 @@
     <div class="footer__inner">
       <div class="footer__brand">
         <span class="nav__mark" aria-hidden="true"></span>
-        <span class="footer__name">[CONFIRM: shop name]</span>
+        <span class="footer__name" data-shop-name>Second Kick</span>
       </div>
       <p class="footer__tagline">รองเท้ามือสองคัดสภาพ ลำลอง &amp; วิ่ง · ส่งทั่วไทย</p>
-      <ul class="footer__links">
-        <li>
-          <a href="[CONFIRM: LINE OA or line.me link]" target="_blank" rel="noopener noreferrer">LINE</a>
+      <!-- Each link is filled from SHOP at load. A channel the shop doesn't have
+           yet takes its whole <li> with it, so no empty bullet is left behind —
+           and if both go, the list removes itself. -->
+      <ul class="footer__links" id="footer-links">
+        <li data-shop-link-item>
+          <a data-shop-link="line" target="_blank" rel="noopener noreferrer">LINE</a>
         </li>
-        <li>
-          <a href="[CONFIRM: IG handle]" target="_blank" rel="noopener noreferrer">Instagram</a>
+        <li data-shop-link-item>
+          <a data-shop-link="instagram" target="_blank" rel="noopener noreferrer">Instagram</a>
         </li>
       </ul>
-      <p class="footer__legal">© <span id="footer-year">2026</span> [CONFIRM: shop name] · ราคารวมค่าส่งแล้ว</p>
+      <p class="footer__legal">© <span id="footer-year">2026</span> <span data-shop-name>Second Kick</span> · ราคารวมค่าส่งแล้ว</p>
     </div>
   </footer>
 

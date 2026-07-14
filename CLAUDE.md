@@ -85,6 +85,28 @@ That's it. Do not edit HTML, CSS or JS to add stock.
 
 ---
 
+## Shop identity — the `SHOP` config
+
+The shop's name and social links live in **one place**: the `SHOP` object at the top
+of `js/app.js`. `applyShopIdentity()` writes them into the page at load.
+
+```js
+const SHOP = { name: 'Second Kick', line: '', instagram: '' };
+```
+
+**An empty string is a supported state, not a bug.** The shop has no LINE or Instagram
+yet, so:
+- `line: ''` → the order CTA renders as a **disabled button** ("ยังไม่เปิดรับสั่งซื้อ"),
+  and the LINE links in nav and footer remove themselves. It must **never** become an
+  `<a>` pointing at an empty or placeholder href — a buy button that goes nowhere costs
+  more trust than one that admits the shop isn't open yet.
+- `instagram: ''` → the footer Instagram link isn't rendered.
+
+Do not scatter these values back into the markup. Elements opt in with
+`data-shop-name` and `data-shop-link="line|instagram"`.
+
+---
+
 ## Files
 
 | Path | Role |

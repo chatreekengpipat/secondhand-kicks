@@ -1,6 +1,6 @@
 # secondhand-kicks
 
-[![Validate](https://github.com/[CONFIRM: GitHub username or org]/secondhand-kicks/actions/workflows/validate.yml/badge.svg)](https://github.com/[CONFIRM: GitHub username or org]/secondhand-kicks/actions/workflows/validate.yml)
+[![Validate](https://github.com/chatreekengpipat/secondhand-kicks/actions/workflows/validate.yml/badge.svg)](https://github.com/chatreekengpipat/secondhand-kicks/actions/workflows/validate.yml)
 
 A static catalog site for a Thai secondhand sneaker shop — casual and running shoes.
 Browse, filter by brand / size / price, open a shoe, and order through LINE.
@@ -130,12 +130,42 @@ CLAUDE.md / AGENTS.md          Context for AI coding agents.
 
 ---
 
+## Shop settings
+
+The shop's name and its social links live in **one place** — the `SHOP` object at the
+top of [`js/app.js`](js/app.js):
+
+```js
+const SHOP = {
+  name: 'Second Kick',
+  line: '',        // e.g. 'https://line.me/R/ti/p/@abc1234'
+  instagram: '',   // e.g. 'https://instagram.com/secondkick.bkk'
+};
+```
+
+An empty string means *"the shop doesn't have this yet"*, and that is a **supported
+state, not a broken one**:
+
+| Setting | When it's empty | When you fill it in |
+|---|---|---|
+| `line` | The order button renders **disabled** — "ยังไม่เปิดรับสั่งซื้อ". It never becomes a link that goes nowhere. The LINE links in the nav and footer remove themselves. | The button becomes a real LINE link and the nav/footer links come back. |
+| `instagram` | The Instagram link isn't rendered. | It appears in the footer. |
+
+Paste a real URL in and everything starts working. **No other file needs to change.**
+
+---
+
 ## Before this goes live
 
-These need real values — search the repo for `[CONFIRM:` to find them all.
-
-- [ ] `[CONFIRM: shop name]` — `index.html` (page title, nav, footer).
-- [ ] `[CONFIRM: LINE OA or line.me link]` — `js/app.js` (`LINE_URL`) and `index.html`.
-- [ ] `[CONFIRM: IG handle]` — `index.html` footer.
-- [ ] `[CONFIRM: GitHub username or org]` — the CI badge at the top of this file.
-- [ ] Replace the placeholder art in `photos/*/` with real photos.
+- [x] ~~CI badge~~ — points at `chatreekengpipat`.
+- [x] ~~Shop name~~ — `Second Kick`. Change it in `SHOP.name`, one line.
+- [ ] **`SHOP.line`** — the shop has no LINE yet, so ordering is correctly disabled.
+      This is the one thing standing between the site and taking real orders.
+- [ ] **`SHOP.instagram`** — optional. Leave `''` if the shop has no Instagram.
+- [ ] **Real photos** — `photos/*/` currently holds SVG stand-ins. Drop real images in
+      and point `photos` at them in `data/shoes.json`.
+- [ ] **Real stock** — the six shoes in `data/shoes.json` are realistic **demo data**,
+      not actual inventory.
+- [ ] **Turn on GitHub Pages** — Settings → Pages → Deploy from a branch → `main` / `(root)`.
+      Worth leaving off until `SHOP.line` is set, so the site doesn't go public with
+      ordering disabled.
