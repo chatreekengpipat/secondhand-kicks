@@ -1,0 +1,945 @@
+/* ============================================================================
+   "Electric Night" — design system for the secondhand-kicks catalog.
+   Recorded in full in DESIGN.md; this file is its only implementation.
+
+   Rebuilt natively from the brief's spec. Nothing here is copied from, imported
+   from, or linked to any template — see DECISIONS.md for why that matters.
+
+   Reading order:
+     1. Tokens          2. Reset/base      3. Primitives (btn, chip, badge)
+     4. Nav             5. Hero            6. Catalog (filters, grid, card)
+     7. How-to-order    8. Footer          9. Modal        10. Motion
+   ========================================================================== */
+
+/* ---------- 1. Tokens ---------------------------------------------------- */
+:root {
+  /* Surfaces */
+  --bg: #0b0b10;
+  --bg-raised: #101017;
+  --surface: #15151d;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Text */
+  --text: #f4f4f6;
+  --text-muted: #9a9aa6;
+
+  /* Accents. PRIMARY = orange: CTAs, prices, active chips, glow.
+     SECONDARY = blue: links, size badges, focus rings, informational hover.
+     House rule: never both in one element — see DESIGN.md "Do's and Don'ts". */
+  --accent: #ff5e00;
+  --accent-ink: #0b0b10; /* text ON orange — orange is bright, so ink is dark */
+  --accent-2: #00b2ff;
+  --amber: #ffb020;
+
+  /* Photo plate. Secondhand photos come from many phones and many rooms; a
+     fixed light plate behind them makes a mixed set look like one catalog. */
+  --photo-bg: #f2f2f2;
+
+  /* Glow — the signature effect. Kept to box-shadow only (compositor-friendly);
+     no filters, no animated backgrounds. */
+  --glow: 0 0 0 1px rgba(255, 94, 0, 0.5), 0 6px 28px -6px rgba(255, 94, 0, 0.55);
+  --glow-strong: 0 0 0 1px rgba(255, 94, 0, 0.7), 0 10px 38px -6px rgba(255, 94, 0, 0.75);
+
+  /* Type. Kanit for display (Thai + Latin, heavy weights hold up at large size);
+     Anuphan for body (taller x-height, easier Thai reading at 16px).
+     Fallbacks are explicit so Thai still renders if Google Fonts is blocked. */
+  --font-display: "Kanit", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
+  --font-body: "Anuphan", "Noto Sans Thai", "Leelawadee UI", "Segoe UI", Tahoma, sans-serif;
+
+  /* Scale */
+  --step-0: 1rem;
+  --step-1: 1.125rem;
+  --step-2: 1.375rem;
+  --step-3: 1.75rem;
+  --step-4: clamp(2rem, 7vw, 3.25rem);
+
+  --radius: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --gap: 1rem;
+  --pad-section: clamp(3rem, 8vw, 5.5rem);
+  --shell: 1200px;
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur: 180ms;
+}
+
+/* ---------- 2. Reset / base --------------------------------------------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+* { margin: 0; }
+
+html {
+  scroll-behavior: smooth;
+  /* The nav is sticky; without this, #catalog lands under it. */
+  scroll-padding-top: 5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  font-weight: 400;
+  line-height: 1.65; /* Thai has tall ascenders + tone marks; 1.65 stops clipping */
+  -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+img { display: block; max-width: 100%; }
+ul, ol { list-style: none; padding: 0; }
+button { font: inherit; color: inherit; }
+
+a { color: var(--accent-2); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: #5cd0ff; }
+
+/* One focus style everywhere, in the secondary accent. Blue reads as
+   "system/interaction" and never competes with an orange CTA for meaning. */
+:focus-visible {
+  outline: 2px solid var(--accent-2);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.skip-link {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -120%);
+  z-index: 100;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+.skip-link:focus { transform: translate(-50%, 0); color: var(--accent-ink); }
+
+.shell { width: min(100% - 2rem, var(--shell)); margin-inline: auto; }
+
+/* ---------- 3. Primitives ------------------------------------------------ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 48px; /* thumb target — the whole flow is phone-first */
+  padding: 0.75rem 1.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-0);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease),
+              background-color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+.btn--sm { min-height: 40px; padding: 0.5rem 1.1rem; font-size: 0.9375rem; }
+
+.btn--primary {
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--glow);
+}
+.btn--primary:hover {
+  color: var(--accent-ink);
+  transform: translateY(-2px);
+  box-shadow: var(--glow-strong);
+}
+.btn--primary:active { transform: translateY(0); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+.btn--ghost:hover {
+  color: var(--text);
+  border-color: var(--accent-2);
+  background: rgba(0, 178, 255, 0.08);
+}
+
+.btn--block { width: 100%; }
+
+/* Disabled CTA (a sold shoe). Not a link at all — see app.js. */
+.btn[aria-disabled="true"],
+.btn:disabled {
+  background: #23232d;
+  color: var(--text-muted);
+  box-shadow: none;
+  border-color: var(--border);
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Chips — adapted from the reference's tab pattern: pill, quiet by default,
+   glowing when active. Rebuilt from scratch as a <button> with aria-pressed. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.4rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              background-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.chip:hover { color: var(--text); border-color: var(--border-strong); }
+
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--glow);
+}
+.chip[aria-pressed="true"]:hover { color: var(--accent-ink); }
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  border: 1px solid transparent;
+}
+/* Available = blue tint: informational, not a call to action. */
+.badge--available {
+  background: rgba(0, 178, 255, 0.12);
+  border-color: rgba(0, 178, 255, 0.35);
+  color: #6fd3ff;
+}
+/* Reserved = outlined amber: "wait", visually distinct from both accents. */
+.badge--reserved {
+  background: transparent;
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.badge--sold {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-strong);
+  color: var(--text-muted);
+}
+/* Size badge — secondary accent, per the token rules. */
+.badge--size {
+  background: rgba(0, 178, 255, 0.1);
+  border-color: rgba(0, 178, 255, 0.3);
+  color: #6fd3ff;
+}
+.badge--grade {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+/* Section headers */
+.section-head { margin-bottom: 2rem; }
+.section-head__title {
+  font-size: var(--step-3);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.section-head__sub { color: var(--text-muted); margin-top: 0.35rem; }
+
+/* ---------- 4. Nav ------------------------------------------------------- */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(11, 11, 16, 0.82);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav__inner {
+  width: min(100% - 2rem, var(--shell));
+  margin-inline: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 64px;
+}
+.nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+.nav__brand:hover { color: var(--text); }
+.nav__mark {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 0 12px 1px rgba(255, 94, 0, 0.75);
+  flex: none;
+}
+
+.nav__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* Hamburger drawn in CSS — an icon font or SVG sprite would be a third request
+   for three rectangles. */
+.nav__bars,
+.nav__bars::before,
+.nav__bars::after {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: var(--text);
+  border-radius: 2px;
+  transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.nav__bars { position: relative; }
+.nav__bars::before,
+.nav__bars::after { content: ""; position: absolute; left: 0; }
+.nav__bars::before { top: -6px; }
+.nav__bars::after { top: 6px; }
+
+.nav__toggle[aria-expanded="true"] .nav__bars { background: transparent; }
+.nav__toggle[aria-expanded="true"] .nav__bars::before { transform: translateY(6px) rotate(45deg); }
+.nav__toggle[aria-expanded="true"] .nav__bars::after { transform: translateY(-6px) rotate(-45deg); }
+
+/* Mobile: menu collapses into a panel under the bar. */
+.nav__menu {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem 1.1rem;
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border);
+}
+.nav__menu.is-open { display: flex; }
+.nav__menu a {
+  padding: 0.7rem 0.25rem;
+  color: var(--text);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+.nav__menu a:hover { color: var(--accent-2); }
+.nav__line {
+  margin-top: 0.4rem;
+  text-align: center;
+  background: var(--accent);
+  color: var(--accent-ink) !important;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--glow);
+}
+.nav__line:hover { color: var(--accent-ink) !important; }
+
+@media (min-width: 768px) {
+  .nav__toggle { display: none; }
+  .nav__menu {
+    display: flex;
+    position: static;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+  .nav__line { margin-top: 0; padding: 0.55rem 1.1rem; }
+}
+
+/* ---------- 5. Hero ------------------------------------------------------ */
+.hero {
+  position: relative;
+  padding: clamp(3.5rem, 12vw, 7rem) 0 var(--pad-section);
+  overflow: hidden;
+}
+/* A single static radial wash. This is the one "atmosphere" effect kept from the
+   reference's neon look — it costs one paint and never animates. Particles,
+   scanlines and animated grids were rejected outright (DECISIONS.md). */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: -30% 0 auto;
+  height: 520px;
+  background: radial-gradient(60% 60% at 50% 40%, rgba(255, 94, 0, 0.16), transparent 70%);
+  pointer-events: none;
+}
+.hero__inner {
+  position: relative;
+  width: min(100% - 2rem, var(--shell));
+  margin-inline: auto;
+  text-align: center;
+}
+.hero__eyebrow {
+  display: inline-block;
+  padding: 0.3rem 0.9rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin-bottom: 1.25rem;
+}
+.hero__title {
+  font-size: var(--step-4);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.hero__accent {
+  color: var(--accent);
+  text-shadow: 0 0 34px rgba(255, 94, 0, 0.45);
+}
+.hero__subtitle {
+  max-width: 46ch;
+  margin: 1.25rem auto 0;
+  color: var(--text-muted);
+  font-size: var(--step-1);
+}
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+.hero__actions .btn { flex: 1 1 auto; min-width: 200px; max-width: 320px; }
+
+@media (min-width: 480px) {
+  .hero__actions .btn { flex: 0 0 auto; }
+}
+
+/* ---------- 6. Catalog --------------------------------------------------- */
+.catalog { padding-block: var(--pad-section); }
+.catalog__inner { width: min(100% - 2rem, var(--shell)); margin-inline: auto; }
+
+.filters {
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+/* min-width:0 is load-bearing. A grid item defaults to min-width:auto, i.e. "never
+   shrink below your content" — so the nowrap chip row below would widen this
+   track to ~530px and push the whole PAGE into horizontal scroll, instead of
+   scrolling inside .chips as intended. Overriding it is what lets overflow-x
+   on .chips actually take effect. */
+.filters__group { min-width: 0; }
+
+.filters__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 0.6rem;
+}
+/* Chips scroll horizontally on a phone rather than wrapping into a tall stack
+   that pushes the grid below the fold. */
+.chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+@media (min-width: 768px) {
+  .chips { flex-wrap: wrap; overflow-x: visible; }
+}
+
+.filters__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+.filters__count { color: var(--text-muted); font-size: 0.9375rem; padding-top: 0.75rem; }
+.filters__count strong { color: var(--text); font-family: var(--font-display); font-weight: 700; }
+.filters__reset {
+  margin-top: 0.75rem;
+  background: none;
+  border: 0;
+  padding: 0.25rem;
+  color: var(--accent-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.filters__reset:hover { color: #5cd0ff; }
+
+/* States */
+.state {
+  padding: 3rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+.state--error {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-align: left;
+  padding: 1.5rem;
+}
+/* The error's accent is carried by the title's leading dot, not by a coloured
+   edge stripe — the stripe is a decorative tic that adds a second, competing
+   border weight to a card that already has one. */
+.state__title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text);
+  font-size: var(--step-1);
+  margin-bottom: 0.4rem;
+}
+.state__title::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px 1px rgba(255, 94, 0, 0.7);
+}
+.state__body { margin-bottom: 1rem; }
+.state__body code {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: #000;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: var(--accent-2);
+}
+
+/* Grid — 1 / 2 / 3 / 4 columns. auto-fill + minmax would collapse a single
+   remaining card to full width; explicit breakpoints keep card size honest. */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+@media (min-width: 480px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1280px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Card */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform var(--dur) var(--ease), border-color var(--dur) var(--ease),
+              box-shadow var(--dur) var(--ease);
+}
+.card:hover,
+.card:focus-within {
+  transform: translateY(-4px);
+  border-color: var(--accent);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 94, 0, 0.25);
+}
+
+.card__media {
+  position: relative;
+  background: var(--photo-bg);
+  aspect-ratio: 1 / 1;
+  /* Reserving the box before the image lands is what stops the grid from
+     jumping as lazy images arrive (layout shift). */
+}
+.card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6%;
+  transition: transform var(--dur) var(--ease);
+}
+.card:hover .card__img { transform: scale(1.03); }
+
+.card__status {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 2;
+}
+
+/* Sold: grayscale the photo and band it. Still browsable — a sold-out shelf is
+   social proof, and it tells a buyer what actually moves. */
+.card--sold .card__img { filter: grayscale(1); opacity: 0.55; }
+.card--sold:hover { transform: none; border-color: var(--border); box-shadow: none; }
+.card--sold:hover .card__img { transform: none; }
+.card__ribbon {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.5rem;
+  background: rgba(11, 11, 16, 0.92);
+  border-top: 1px solid var(--border-strong);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.875rem;
+  letter-spacing: 0.22em;
+  text-align: center;
+}
+
+.card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1rem 1.15rem;
+  flex: 1;
+}
+.card__brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.card__model {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--step-1);
+  line-height: 1.35;
+}
+/* The whole card is clickable via this stretched link, but only the model text
+   is the accessible name — one tab stop per card, not three.
+   It is a <button>, so the UA's own chrome (grey field, border, centred text)
+   has to be stripped or the model name renders as what looks like a text input. */
+.card__link {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: 0;
+  text-align: start;
+  font: inherit;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+}
+.card__link:hover { color: var(--text); }
+.card__link::after { content: ""; position: absolute; inset: 0; z-index: 1; }
+
+.card__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+.card__foot {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+/* Price = primary accent. It is the number the buyer came for. */
+.card__price {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-2);
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+.card--sold .card__price { color: var(--text-muted); }
+.card__was {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+  text-decoration: line-through;
+}
+
+/* ---------- 7. How to order ---------------------------------------------- */
+.how {
+  padding-block: var(--pad-section);
+  background: var(--bg-raised);
+  border-block: 1px solid var(--border);
+}
+.how__inner { width: min(100% - 2rem, var(--shell)); margin-inline: auto; }
+
+.steps {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+  counter-reset: step;
+}
+@media (min-width: 768px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+
+.step {
+  position: relative;
+  padding: 1.5rem 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.step__num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.9rem;
+  border-radius: 12px;
+  background: rgba(255, 94, 0, 0.12);
+  border: 1px solid rgba(255, 94, 0, 0.4);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+.step__title { font-size: var(--step-1); margin-bottom: 0.3rem; }
+.step__body { color: var(--text-muted); }
+/* Informational aside. Reads as secondary-accent through a tinted fill and an
+   even hairline border — not through an edge stripe, which would add a second
+   border weight and read as a decorative tic rather than as information. */
+.how__note {
+  margin-top: 1.5rem;
+  padding: 1rem 1.25rem;
+  background: rgba(0, 178, 255, 0.06);
+  border: 1px solid rgba(0, 178, 255, 0.22);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* ---------- 8. Footer ---------------------------------------------------- */
+.footer { padding-block: var(--pad-section) 2.5rem; }
+.footer__inner {
+  width: min(100% - 2rem, var(--shell));
+  margin-inline: auto;
+  text-align: center;
+}
+.footer__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--step-1);
+}
+.footer__tagline { color: var(--text-muted); margin-top: 0.5rem; }
+.footer__links {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  margin-top: 1.25rem;
+}
+.footer__links a {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer__links a:hover { text-decoration: underline; }
+.footer__legal { margin-top: 1.5rem; color: var(--text-muted); font-size: 0.875rem; }
+
+/* ---------- 9. Modal ----------------------------------------------------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end; /* phone: sheet from the bottom, thumb-reachable */
+  justify-content: center;
+}
+@media (min-width: 768px) {
+  .modal { align-items: center; padding: 2rem; }
+}
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 5, 8, 0.78);
+  backdrop-filter: blur(3px);
+  animation: fade var(--dur) var(--ease);
+}
+.modal__dialog {
+  position: relative;
+  width: min(100%, 860px);
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain; /* stop scroll chaining to the page behind */
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  animation: sheet 220ms var(--ease);
+}
+@media (min-width: 768px) {
+  .modal__dialog { border-radius: var(--radius-lg); animation: pop 200ms var(--ease); }
+}
+.modal__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(11, 11, 16, 0.75);
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+.modal__close:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+.detail { display: grid; grid-template-columns: 1fr; }
+@media (min-width: 768px) {
+  .detail { grid-template-columns: 1fr 1fr; }
+}
+
+.detail__gallery { background: var(--photo-bg); padding: 1rem; }
+.detail__main {
+  aspect-ratio: 1 / 1;
+  background: var(--photo-bg);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.detail__main img { width: 100%; height: 100%; object-fit: contain; }
+.detail--sold .detail__main img { filter: grayscale(1); opacity: 0.65; }
+
+.detail__thumbs { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.detail__thumb {
+  width: 64px;
+  height: 64px;
+  padding: 2px;
+  background: #fff;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  overflow: hidden;
+}
+.detail__thumb img { width: 100%; height: 100%; object-fit: contain; }
+.detail__thumb[aria-current="true"] { border-color: var(--accent); }
+.detail__thumb:hover { border-color: var(--accent-2); }
+
+.detail__info { padding: 1.5rem 1.25rem 1.75rem; display: flex; flex-direction: column; gap: 0.85rem; }
+@media (min-width: 768px) { .detail__info { padding: 2rem 1.75rem; } }
+
+.detail__brand {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.detail__title { font-size: var(--step-3); font-weight: 800; letter-spacing: -0.01em; }
+.detail__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.detail__price-row { display: flex; align-items: baseline; gap: 0.6rem; flex-wrap: wrap; }
+.detail__price {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.detail--sold .detail__price { color: var(--text-muted); }
+.detail__was { color: var(--text-muted); text-decoration: line-through; }
+.detail__save {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.detail__block {
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+.detail__label {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+.detail__notes { color: var(--text); }
+.detail__cta { margin-top: 0.5rem; }
+.detail__hint {
+  margin-top: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+.detail__id {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* ---------- 10. Motion --------------------------------------------------- */
+@keyframes fade { from { opacity: 0; } }
+@keyframes sheet { from { transform: translateY(16px); opacity: 0; } }
+@keyframes pop { from { transform: scale(0.97); opacity: 0; } }
+
+/* Honour the OS setting. Motion is decoration here; every state remains
+   reachable without it. Smooth scrolling goes too — it is the one that most
+   often triggers vestibular symptoms. */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .card:hover,
+  .btn--primary:hover { transform: none; }
+  .card:hover .card__img { transform: none; }
+}
