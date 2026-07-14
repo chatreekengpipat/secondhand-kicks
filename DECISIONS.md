@@ -156,3 +156,69 @@ normally. The CSS still loads, so the page looks intentional rather than broken.
 **Trade-off accepted:** the owner must run a one-line local server to preview changes
 on their own machine. In exchange, the data model stays honest and adding a shoe stays
 a one-file edit. Production, which is GitHub Pages over HTTPS, is unaffected.
+
+---
+
+## 7. Why the site is in English, and why the fonts didn't change
+
+The site was originally written in Thai for Thai buyers. The owner changed the target
+audience to English-speaking, youth-oriented buyers. That is a product decision, not an
+engineering one, and it is recorded here so nobody later "fixes" the English back to
+Thai thinking it was a regression.
+
+**The fonts stayed.** Kanit and Anuphan were originally chosen because they render Thai
+perfectly — the criterion that no longer applies. They earn their place anyway: Kanit's
+heavy weights are geometric and slightly condensed, which is exactly what makes a
+four-word quote fill a phone screen without wrapping, and the pair carries the whole
+"Electric Night" identity. Swapping them would have meant re-deriving the design system
+to buy nothing.
+
+**Trade-off accepted:** we ship two Thai-capable webfonts on an English-only site, which
+is very slightly more glyph data than a Latin-only face. In exchange, the identity is
+unchanged and the day any Thai copy returns — a bilingual toggle, a Thai landing page —
+it costs a font change of exactly zero.
+
+**Prices are `฿2,490`, not `THB 2,490`.** `Intl.NumberFormat`'s `currency` style would
+produce the latter: correct, and it reads like an invoice. A shopper wants a price.
+
+---
+
+## 8. Why `[hidden] { display: none !important; }` is in the reset
+
+This one is a bug post-mortem, not a preference, and it is written down because it is
+the single most expensive mistake in this repo's history.
+
+`[hidden] { display: none }` is defined in the **browser's UA stylesheet**. Any author
+rule beats a UA rule *regardless of specificity*. So the moment we wrote:
+
+```css
+.modal { display: flex; }
+```
+
+the modal's `hidden` attribute silently stopped working. And the modal is
+`position: fixed; inset: 0` — so it sat open-but-empty over the entire site from the
+first page load:
+
+- its backdrop (`rgba(5,5,8,0.78)`) dimmed **every pixel of the site by 78%**;
+- because it covered the viewport, it **intercepted every click** — no card, chip, or
+  button was actually tappable.
+
+`.filters`, `.grid` and `.btn` all had the same latent bug for the same reason.
+
+**Why the tests didn't catch it.** The suite was green — 34/34 — because it drove the
+page with `element.click()`, which invokes the handler *directly and bypasses hit-testing
+entirely*. A full-page invisible overlay is completely undetectable that way. It was
+found by eye, in a screenshot, and then confirmed with `document.elementFromPoint()`,
+which reported `DIV.modal__dialog` sitting on top of the hero.
+
+**The fix is the global reset, not a narrow `.modal[hidden]` rule.** The narrow version
+fixes today's symptom and leaves the trap armed for the next person who writes
+`display:` on something they also toggle with `hidden`.
+
+**`!important` is deliberate here.** `hidden` means hidden; nothing should be able to
+out-argue it, including a rule nobody has written yet.
+
+**What changed in how we test.** Any assertion that a control is *usable* now goes
+through real hit-testing (`document.elementFromPoint`, or a real
+`Input.dispatchMouseEvent`) rather than a synthetic `.click()`. A green suite is not the
+same thing as a working page.

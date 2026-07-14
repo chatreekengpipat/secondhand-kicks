@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t">
-  <title id="t">Asics Gel-Kayano 30 — ตัวอย่างรูป (placeholder)</title>
+  <title id="t">Asics Gel-Kayano 30 — sample photo (placeholder)</title>
   <rect width="600" height="600" fill="#F2F2F2"/>
   <g transform="translate(300 300) rotate(0) scale(1) translate(-300 -300)">
     <ellipse cx="290" cy="404" rx="230" ry="16" fill="#000" opacity="0.05"/>
@@ -15,5 +15,5 @@
   <text x="300" y="510" font-family="Anuphan, 'Segoe UI', Tahoma, sans-serif" font-size="22"
         fill="#8A8A96" text-anchor="middle">Gel-Kayano 30 · EU 44</text>
   <text x="300" y="552" font-family="Anuphan, 'Segoe UI', Tahoma, sans-serif" font-size="17" letter-spacing="1"
-        fill="#A6A6B2" text-anchor="middle">มุมข้าง / SIDE · 1/2 · ตัวอย่างรูป</text>
+        fill="#A6A6B2" text-anchor="middle">SIDE · 1/2 · SAMPLE</text>
 </svg>

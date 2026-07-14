@@ -7,9 +7,12 @@ This file is the shared contract for any agent working in this repo.
 
 ## What this is
 
-A static catalog site for a Thai secondhand sneaker shop (casual + running).
+A static catalog site for a second-hand sneaker shop (casual + running).
 Deployed on **GitHub Pages at a subpath**, so **every path must be relative**.
 A leading `/` resolves to the user root and 404s in production.
+
+**The site's copy is English.** It was Thai originally; the owner switched it. The
+fonts still carry full Thai coverage, so re-adding Thai costs no font change.
 
 The buyer's whole journey is: browse → filter → open a shoe → tap through to LINE.
 Three taps, on a phone, on mobile data.
@@ -63,12 +66,12 @@ A JSON array of shoe objects. Enforced by `scripts/validate-shoes.js` (run in CI
 | `model` | string | required, non-empty. |
 | `sizeEU` | number | required, > 0. Drives the size filter chips. |
 | `sizeUS` | string | required. A **string**, so `"8.5"` and `"9-9.5"` both work and `"8.0"` doesn't render as `8`. |
-| `condition` | object | required. `{ "grade": "A"\|"B"\|"C", "note": "<short Thai note>" }` |
+| `condition` | object | required. `{ "grade": "A"\|"B"\|"C", "note": "<short description of the wear>" }` |
 | `price` | number | required, **> 0**. THB. |
 | `originalPrice` | number | *optional.* If present must be **> `price`**, or it isn't a discount. |
 | `status` | string | required. One of `available` \| `reserved` \| `sold`. |
 | `photos` | string[] | required, **non-empty**. Relative paths. First photo is the card image. |
-| `notes` | string | required, non-empty. Thai. Shown in the detail modal. |
+| `notes` | string | required, non-empty. Shown in the detail modal. |
 | `dateAdded` | string | required. `YYYY-MM-DD`, and a **real** date (`2026-02-31` fails). |
 
 ### Status behaviour
@@ -96,7 +99,7 @@ const SHOP = { name: 'Second Kick', line: '', instagram: '' };
 
 **An empty string is a supported state, not a bug.** The shop has no LINE or Instagram
 yet, so:
-- `line: ''` → the order CTA renders as a **disabled button** ("ยังไม่เปิดรับสั่งซื้อ"),
+- `line: ''` → the order CTA renders as a **disabled button** ("Ordering not open yet"),
   and the LINE links in nav and footer remove themselves. It must **never** become an
   `<a>` pointing at an empty or placeholder href — a buy button that goes nowhere costs
   more trust than one that admits the shop isn't open yet.
@@ -168,5 +171,36 @@ shapes, or auto-rotating text — all considered and rejected for performance.
   focus returns to the card that opened it, body scroll is locked while open.
 - Focus is always visible (`:focus-visible`, blue ring).
 - Status is never colour-only — `sold` also has grayscale and a text ribbon.
-- Thai `alt` text and Thai UI copy throughout. Body line-height ≥ 1.65 so Thai tone
-  marks don't clip.
+- Every image has real `alt` text (brand, model, size) — never a filename.
+
+---
+
+## Traps that have already bitten this codebase
+
+**1. `[hidden]` does not hide an element you gave a `display` to.**
+`[hidden] { display: none }` lives in the browser's UA stylesheet, and *any* author
+rule beats a UA rule regardless of specificity. So `.modal { display: flex }` silently
+defeats `hidden`. This shipped: the modal is `position: fixed; inset: 0`, so it sat
+open-but-empty over the whole site, dimmed every page with its backdrop, and **swallowed
+every click**. `.filters`, `.grid` and `.btn` had the same latent bug.
+
+`css/style.css` now carries `[hidden] { display: none !important; }` in the reset.
+**Do not remove it**, and do not "fix" it with a narrower rule — the point is that it
+covers the element somebody adds next.
+
+**2. A programmatic `.click()` will not catch that class of bug.**
+`el.click()` bypasses hit-testing entirely, so a full-page invisible overlay passes
+every test while making the site unusable. Any test that claims a control is *usable*
+must go through real hit-testing — `document.elementFromPoint()`, or a real
+`Input.dispatchMouseEvent`. A green suite is not the same as a working page.
+
+**3. Grid/flex children default to `min-width: auto`.**
+They refuse to shrink below their content, which is what makes a page scroll sideways
+on a phone. `.filters__group` needs `min-width: 0` for the chip row to scroll inside
+it instead of widening the whole document.
+
+**4. Zeroing animation *duration* under `prefers-reduced-motion` is not enough.**
+The hero words use `animation-fill-mode: backwards`, which holds the hidden from-state
+for the whole `animation-delay`. Kill the duration but leave the delay and the quote
+sits invisible, then pops. `animation-delay: 0s !important` is in the reduced-motion
+block for exactly this reason.

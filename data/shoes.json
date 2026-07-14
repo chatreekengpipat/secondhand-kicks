@@ -5,12 +5,12 @@
     "model": "Air Force 1 '07",
     "sizeEU": 42,
     "sizeUS": "8.5",
-    "condition": { "grade": "A", "note": "ใส่ไม่กี่ครั้ง พื้นแทบไม่สึก" },
+    "condition": { "grade": "A", "note": "Worn a handful of times. Sole barely touched." },
     "price": 2490,
     "originalPrice": 3800,
     "status": "available",
     "photos": ["photos/nike-af1-07-white-eu42/1.svg", "photos/nike-af1-07-white-eu42/2.svg"],
-    "notes": "สีขาวล้วน ทรงคลาสสิก ใส่ได้ทุกวัน หนังยังแน่น ไม่มีรอยเหลือง กล่องเดิมครบ",
+    "notes": "All-white, the classic silhouette, goes with anything. Leather is still firm with no yellowing. Comes with the original box.",
     "dateAdded": "2026-07-02"
   },
   {
@@ -19,12 +19,12 @@
     "model": "Air Zoom Pegasus 40",
     "sizeEU": 43,
     "sizeUS": "9.5",
-    "condition": { "grade": "B", "note": "ผ่านการวิ่งมาราว 150 กม. พื้นยังเด้งดี" },
+    "condition": { "grade": "B", "note": "About 150 km of running. Foam still springy." },
     "price": 1890,
     "originalPrice": 4200,
     "status": "available",
     "photos": ["photos/nike-pegasus-40-black-eu43/1.svg", "photos/nike-pegasus-40-black-eu43/2.svg"],
-    "notes": "รองเท้าวิ่งซ้อมประจำวัน โฟม React ยังคืนตัวดี มีรอยเปื้อนเล็กน้อยที่ผ้าด้านข้าง ซักออกได้",
+    "notes": "A daily trainer with plenty left in it. The React foam still rebounds well. Light staining on the side mesh that washes out.",
     "dateAdded": "2026-06-28"
   },
   {
@@ -33,12 +33,12 @@
     "model": "Samba OG",
     "sizeEU": 41,
     "sizeUS": "8",
-    "condition": { "grade": "A", "note": "สภาพเกือบใหม่ ใส่ 2-3 ครั้ง" },
+    "condition": { "grade": "A", "note": "Near new — worn two or three times." },
     "price": 2790,
     "originalPrice": 3600,
     "status": "reserved",
     "photos": ["photos/adidas-samba-og-eu41/1.svg", "photos/adidas-samba-og-eu41/2.svg"],
-    "notes": "ทรงฮิตตลอดกาล หนังนิ่ม ยางพื้นยังไม่สึก มีลูกค้าจองไว้แล้ว รอยืนยันการโอน",
+    "notes": "The shape that never goes out of style. Soft leather, gum sole hardly worn. Already reserved — waiting on the buyer's transfer.",
     "dateAdded": "2026-07-05"
   },
   {
@@ -47,12 +47,12 @@
     "model": "Gel-Kayano 30",
     "sizeEU": 44,
     "sizeUS": "10",
-    "condition": { "grade": "B", "note": "ใช้งานปกติ มีรอยสึกที่ส้นเล็กน้อย" },
+    "condition": { "grade": "B", "note": "Normal use. Slight wear at the heel." },
     "price": 2190,
     "originalPrice": 5900,
     "status": "available",
     "photos": ["photos/asics-gel-kayano-30-eu44/1.svg", "photos/asics-gel-kayano-30-eu44/2.svg"],
-    "notes": "รองเท้าวิ่งสายซัพพอร์ต เหมาะกับคนเท้าล้มด้านใน (overpronation) เจล FF Blast ยังนุ่มเต็มระบบ",
+    "notes": "A support shoe, built for runners whose ankles roll inward (overpronation). The FF Blast cushioning is still soft the whole way through.",
     "dateAdded": "2026-06-21"
   },
   {
@@ -61,12 +61,12 @@
     "model": "Clifton 9",
     "sizeEU": 42,
     "sizeUS": "8.5",
-    "condition": { "grade": "A", "note": "วิ่งมาไม่ถึง 50 กม. เหมือนใหม่" },
+    "condition": { "grade": "A", "note": "Under 50 km. Basically new." },
     "price": 3290,
     "originalPrice": 5200,
     "status": "available",
     "photos": ["photos/hoka-clifton-9-eu42/1.svg", "photos/hoka-clifton-9-eu42/2.svg"],
-    "notes": "เบามาก พื้นหนานุ่ม เหมาะกับวิ่งระยะไกลและใส่เดินยาว ๆ ซื้อมาแล้วไซซ์ไม่พอดี",
+    "notes": "Featherlight, with a thick soft sole. Great for long runs and long days on your feet. Bought in the wrong size.",
     "dateAdded": "2026-07-09"
   },
   {
@@ -75,11 +75,11 @@
     "model": "550",
     "sizeEU": 40,
     "sizeUS": "7",
-    "condition": { "grade": "C", "note": "ใช้งานหนัก หนังมีรอยขูด พื้นสึกชัดเจน" },
+    "condition": { "grade": "C", "note": "Heavily used. Scuffed leather, clear sole wear." },
     "price": 1290,
     "status": "sold",
     "photos": ["photos/new-balance-550-eu40/1.svg", "photos/new-balance-550-eu40/2.svg"],
-    "notes": "ทรงบาสเก็ตบอลย้อนยุค สภาพผ่านการใช้งานจริง ขายแล้วครับ ขอบคุณมากครับ",
+    "notes": "The retro basketball silhouette, honestly worn in. Sold — thank you!",
     "dateAdded": "2026-06-14"
   }
 ]

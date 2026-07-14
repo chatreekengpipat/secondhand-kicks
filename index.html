@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Kept in sync with SHOP.name in js/app.js, which is the source of truth.
        Hardcoded here too so the browser tab is right before JS runs. -->
-  <title>Second Kick — รองเท้ามือสอง สภาพดี คัดมาแล้ว</title>
-  <meta name="description" content="รองเท้าผ้าใบมือสองคัดสภาพ ทั้งสายลำลองและสายวิ่ง ราคาจริง รูปจริง สั่งซื้อผ่าน LINE ได้เลย">
+  <title>Second Kick — Second-hand sneakers, checked pair by pair</title>
+  <meta name="description" content="Curated second-hand lifestyle and running sneakers. Honest condition notes, real photos, no filters. Order straight through LINE.">
   <meta name="theme-color" content="#0B0B10">
 
   <!-- Google Fonts. preconnect shaves a round-trip on mobile data, which is the
-       target network. display=swap: Thai text must be readable immediately even
-       if the font is still downloading — a blank headline is worse than a
+       target network. display=swap: the headline must be readable immediately
+       even if the font is still downloading — a blank hero is worse than a
        fallback one. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
   <link rel="icon" href="./favicon.svg" type="image/svg+xml">
 </head>
 <body>
-  <a class="skip-link" href="#catalog">ข้ามไปที่รายการรองเท้า</a>
+  <a class="skip-link" href="#catalog">Skip to the shoes</a>
 
   <header class="nav" id="nav">
     <div class="nav__inner">
@@ -38,17 +38,17 @@
         type="button"
         aria-expanded="false"
         aria-controls="nav-menu"
-        aria-label="เปิดเมนู">
+        aria-label="Open menu">
         <span class="nav__bars" aria-hidden="true"></span>
       </button>
 
-      <nav class="nav__menu" id="nav-menu" aria-label="เมนูหลัก">
-        <a href="#catalog">รองเท้าทั้งหมด</a>
-        <a href="#how-to-order">วิธีสั่งซื้อ</a>
+      <nav class="nav__menu" id="nav-menu" aria-label="Main">
+        <a href="#catalog">All shoes</a>
+        <a href="#how-to-order">How to order</a>
         <!-- href is filled from SHOP.line at load. If the shop has no LINE yet,
              this link removes itself rather than pointing at nothing. -->
         <a class="nav__line" data-shop-link="line" target="_blank" rel="noopener noreferrer">
-          สั่งซื้อทาง LINE
+          Order on LINE
         </a>
       </nav>
     </div>
@@ -57,18 +57,38 @@
   <main>
     <section class="hero">
       <div class="hero__inner">
-        <p class="hero__eyebrow">รองเท้ามือสอง คัดสภาพทุกคู่</p>
-        <h1 class="hero__title">
-          รองเท้าดี ๆ<br>
-          <span class="hero__accent">ไม่ต้องซื้อใหม่</span>
-        </h1>
-        <p class="hero__subtitle">
-          สนีกเกอร์ลำลองและรองเท้าวิ่งมือสอง คัดมาแล้วทุกคู่
-          บอกสภาพตามจริง รูปจริง ไม่แต่งรูป ทักมาถามได้เลยครับ
+        <p class="hero__eyebrow reveal" style="--i: 0">Curated second-hand sneakers</p>
+
+        <!-- The quote is the first thing anyone reads, so it gets the entrance.
+             Each word is a two-layer span: the outer clips, the inner slides up
+             out of it. That mask-reveal only ever animates `transform`, so it
+             composites on the GPU and never triggers layout.
+
+             --i is the word's position in the stagger. It is data (which word am
+             I?), not styling, which is why it lives in the markup rather than as
+             a pile of :nth-child rules that would silently break the moment a
+             word is added or removed. -->
+        <blockquote class="quote">
+          <span class="quote__mark reveal" style="--i: 0" aria-hidden="true">&ldquo;</span>
+          <p class="quote__text">
+            <span class="quote__line">
+              <span class="word" style="--i: 1"><span>Second-hand.</span></span>
+            </span>
+            <span class="quote__line quote__line--accent">
+              <span class="word" style="--i: 2"><span>Never</span></span>
+              <span class="word" style="--i: 3"><span>second-best.</span></span>
+            </span>
+          </p>
+        </blockquote>
+
+        <p class="hero__subtitle reveal" style="--i: 5">
+          Lifestyle and running pairs, checked one by one. Real photos, honest
+          condition notes, no filters.
         </p>
-        <div class="hero__actions">
-          <a class="btn btn--primary" href="#catalog">ดูรองเท้าทั้งหมด</a>
-          <a class="btn btn--ghost" href="#how-to-order">วิธีสั่งซื้อ</a>
+
+        <div class="hero__actions reveal" style="--i: 6">
+          <a class="btn btn--primary" href="#catalog">Browse all shoes</a>
+          <a class="btn btn--ghost" href="#how-to-order">How to order</a>
         </div>
       </div>
     </section>
@@ -76,44 +96,44 @@
     <section class="catalog" id="catalog" aria-labelledby="catalog-heading">
       <div class="catalog__inner">
         <div class="section-head">
-          <h2 class="section-head__title" id="catalog-heading">รองเท้าทั้งหมด</h2>
-          <p class="section-head__sub">เลือกดูตามยี่ห้อ ไซซ์ หรือช่วงราคาได้เลย</p>
+          <h2 class="section-head__title" id="catalog-heading">All shoes</h2>
+          <p class="section-head__sub">Filter by brand, size, or price.</p>
         </div>
 
         <!-- Filters are built by JS from the data, not hardcoded: a new brand in
              shoes.json must produce a new chip with no HTML edit. -->
         <div class="filters" id="filters" hidden>
           <div class="filters__group">
-            <h3 class="filters__label" id="filter-brand-label">ยี่ห้อ</h3>
+            <h3 class="filters__label" id="filter-brand-label">Brand</h3>
             <div class="chips" id="filter-brand" role="group" aria-labelledby="filter-brand-label"></div>
           </div>
           <div class="filters__group">
-            <h3 class="filters__label" id="filter-size-label">ไซซ์ (EU)</h3>
+            <h3 class="filters__label" id="filter-size-label">Size (EU)</h3>
             <div class="chips" id="filter-size" role="group" aria-labelledby="filter-size-label"></div>
           </div>
           <div class="filters__group">
-            <h3 class="filters__label" id="filter-price-label">ราคา</h3>
+            <h3 class="filters__label" id="filter-price-label">Price</h3>
             <div class="chips" id="filter-price" role="group" aria-labelledby="filter-price-label"></div>
           </div>
           <div class="filters__bar">
             <!-- aria-live: a screen-reader user filtering with the keyboard gets
                  no feedback from a silently re-rendered grid. -->
             <p class="filters__count" id="result-count" role="status" aria-live="polite"></p>
-            <button class="filters__reset" id="filter-reset" type="button" hidden>ล้างตัวกรอง</button>
+            <button class="filters__reset" id="filter-reset" type="button" hidden>Clear filters</button>
           </div>
         </div>
 
         <!-- Every state below is mutually exclusive; JS toggles [hidden]. -->
-        <p class="state state--loading" id="state-loading">กำลังโหลดรายการรองเท้า…</p>
+        <p class="state state--loading" id="state-loading">Loading the shoes…</p>
 
         <div class="state state--error" id="state-error" role="alert" hidden>
-          <h3 class="state__title">โหลดรายการรองเท้าไม่สำเร็จ</h3>
+          <h3 class="state__title">Couldn't load the shoes</h3>
           <p class="state__body" id="state-error-body"></p>
-          <button class="btn btn--primary btn--sm" id="state-error-retry" type="button">ลองอีกครั้ง</button>
+          <button class="btn btn--primary btn--sm" id="state-error-retry" type="button">Try again</button>
         </div>
 
         <p class="state state--empty" id="state-empty" role="status" hidden>
-          ไม่พบรองเท้าตามเงื่อนไข ลองปรับ filter ดูครับ
+          No shoes match those filters. Try widening your search.
         </p>
 
         <ul class="grid" id="grid" aria-labelledby="catalog-heading"></ul>
@@ -123,30 +143,30 @@
     <section class="how" id="how-to-order" aria-labelledby="how-heading">
       <div class="how__inner">
         <div class="section-head">
-          <h2 class="section-head__title" id="how-heading">วิธีสั่งซื้อ</h2>
-          <p class="section-head__sub">ง่าย ๆ 3 ขั้นตอน ไม่ต้องสมัครสมาชิก</p>
+          <h2 class="section-head__title" id="how-heading">How to order</h2>
+          <p class="section-head__sub">Three steps. No account needed.</p>
         </div>
 
         <ol class="steps">
           <li class="step">
             <span class="step__num" aria-hidden="true">1</span>
-            <h3 class="step__title">เลือกคู่ที่ถูกใจ</h3>
-            <p class="step__body">กดที่รูปเพื่อดูรายละเอียด ไซซ์ สภาพ และรูปเพิ่มเติมของคู่นั้น</p>
+            <h3 class="step__title">Pick a pair</h3>
+            <p class="step__body">Tap any card to see its size, condition, and the rest of the photos.</p>
           </li>
           <li class="step">
             <span class="step__num" aria-hidden="true">2</span>
-            <h3 class="step__title">ทักมาทาง LINE</h3>
-            <p class="step__body">กดปุ่มสั่งซื้อในหน้ารายละเอียด แล้วแจ้ง “รหัสรองเท้า” ที่แสดงใต้ปุ่มกับทางร้าน</p>
+            <h3 class="step__title">Message us on LINE</h3>
+            <p class="step__body">Hit the order button on the detail view, then send us the shoe code shown underneath it.</p>
           </li>
           <li class="step">
             <span class="step__num" aria-hidden="true">3</span>
-            <h3 class="step__title">โอนและรอรับของ</h3>
-            <p class="step__body">ยืนยันไซซ์และที่อยู่ โอนเงิน แล้วส่งของภายใน 1–2 วันทำการ</p>
+            <h3 class="step__title">Pay, and we ship</h3>
+            <p class="step__body">Confirm your size and address, transfer, and we ship within 1–2 business days.</p>
           </li>
         </ol>
 
         <p class="how__note">
-          ยังไม่แน่ใจเรื่องไซซ์? ทักมาถามก่อนได้ครับ บอกไซซ์ที่ใส่ประจำมา เดี๋ยวช่วยเทียบให้
+          Not sure about sizing? Message us first — tell us what you normally wear and we'll help you match it.
         </p>
       </div>
     </section>
@@ -158,7 +178,7 @@
         <span class="nav__mark" aria-hidden="true"></span>
         <span class="footer__name" data-shop-name>Second Kick</span>
       </div>
-      <p class="footer__tagline">รองเท้ามือสองคัดสภาพ ลำลอง &amp; วิ่ง · ส่งทั่วไทย</p>
+      <p class="footer__tagline">Second-hand sneakers · Lifestyle &amp; running · Shipping across Thailand</p>
       <!-- Each link is filled from SHOP at load. A channel the shop doesn't have
            yet takes its whole <li> with it, so no empty bullet is left behind —
            and if both go, the list removes itself. -->
@@ -170,7 +190,7 @@
           <a data-shop-link="instagram" target="_blank" rel="noopener noreferrer">Instagram</a>
         </li>
       </ul>
-      <p class="footer__legal">© <span id="footer-year">2026</span> <span data-shop-name>Second Kick</span> · ราคารวมค่าส่งแล้ว</p>
+      <p class="footer__legal">© <span id="footer-year">2026</span> <span data-shop-name>Second Kick</span> · Shipping included</p>
     </div>
   </footer>
 
@@ -179,7 +199,7 @@
   <div class="modal" id="modal" hidden>
     <div class="modal__backdrop" data-close-modal></div>
     <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal-dialog">
-      <button class="modal__close" id="modal-close" type="button" aria-label="ปิด" data-close-modal>
+      <button class="modal__close" id="modal-close" type="button" aria-label="Close" data-close-modal>
         <span aria-hidden="true">×</span>
       </button>
       <div class="modal__body" id="modal-body"></div>

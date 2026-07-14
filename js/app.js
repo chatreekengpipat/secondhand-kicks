@@ -46,15 +46,15 @@
   const STATUS_ORDER = { available: 0, reserved: 1, sold: 2 };
 
   const STATUS_LABEL = {
-    available: 'พร้อมส่ง',
-    reserved: 'มีคนจองแล้ว',
-    sold: 'ขายแล้ว',
+    available: 'In stock',
+    reserved: 'Reserved',
+    sold: 'Sold',
   };
 
   const PRICE_BUCKETS = [
-    { id: 'lt2000', label: 'ต่ำกว่า 2,000', test: (p) => p < 2000 },
-    { id: '2000-2999', label: '2,000–2,999', test: (p) => p >= 2000 && p < 3000 },
-    { id: 'gte3000', label: '3,000 ขึ้นไป', test: (p) => p >= 3000 },
+    { id: 'lt2000', label: 'Under ฿2,000', test: (p) => p < 2000 },
+    { id: '2000-2999', label: '฿2,000–2,999', test: (p) => p >= 2000 && p < 3000 },
+    { id: 'gte3000', label: '฿3,000 and up', test: (p) => p >= 3000 },
   ];
 
   // Neutral placeholder for a photo that 404s or is corrupt. Inline data URI so
@@ -65,7 +65,7 @@
     '<g fill="none" stroke="#C4C4CB" stroke-width="14" stroke-linecap="round">' +
     '<path d="M188 330h224M188 330l-28 64h280l-28-64"/><circle cx="300" cy="252" r="52"/>' +
     '</g><text x="300" y="452" text-anchor="middle" font-family="sans-serif" ' +
-    'font-size="26" fill="#9A9AA6">ไม่มีรูป</text></svg>'
+    'font-size="26" fill="#9A9AA6">No photo</text></svg>'
   );
 
   /* ---------- Elements ---------------------------------------------------- */
@@ -99,13 +99,14 @@
 
   /* ---------- Utilities --------------------------------------------------- */
 
-  // Thai buyers read prices grouped: 2,490 not 2490. Intl handles this and stays
-  // correct if the locale ever changes; we only pin the currency symbol away
-  // because "฿2,490" reads as a foreign-exchange rate to a local buyer.
-  const priceFmt = new Intl.NumberFormat('th-TH', { maximumFractionDigits: 0 });
+  // Grouped thousands: 2,490 — not 2490. Intl does the grouping, and it stays
+  // right if the locale ever changes. The ฿ is prepended rather than left to
+  // Intl's `currency` style, which would render "THB 2,490" — correct, but it
+  // reads like an invoice. A shopper wants a price, not an accounting entry.
+  const priceFmt = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 
   function formatPrice(n) {
-    return priceFmt.format(n) + ' บาท';
+    return '฿' + priceFmt.format(n);
   }
 
   /** Build an element. Text goes through textContent, never innerHTML. */
@@ -138,11 +139,11 @@
     try {
       const res = await fetch(DATA_URL, { cache: 'no-cache' });
       if (!res.ok) {
-        throw new Error(`เซิร์ฟเวอร์ตอบกลับ ${res.status} ${res.statusText}`);
+        throw new Error(`the server replied ${res.status} ${res.statusText}`);
       }
       const data = await res.json();
       if (!Array.isArray(data) || data.length === 0) {
-        throw new Error('ไฟล์ข้อมูลว่างเปล่า หรือรูปแบบไม่ถูกต้อง');
+        throw new Error('The data file is empty, or is not in the expected format.');
       }
       state.shoes = data.slice().sort(compareShoes);
       buildFilters();
@@ -170,12 +171,13 @@
     // a generic network error.
     if (location.protocol === 'file:') {
       el.errorBody.append(
-        'เบราว์เซอร์ไม่อนุญาตให้อ่านไฟล์ข้อมูลตอนเปิดหน้าเว็บตรง ๆ จากเครื่อง ' +
-        '(ข้อจำกัดด้านความปลอดภัย) ให้เปิดผ่านเซิร์ฟเวอร์เล็ก ๆ แทน เช่นสั่ง ',
+        "Your browser blocks pages opened straight from disk from reading local " +
+        'data files — a security rule, not a bug in this site. Serve the folder ' +
+        'instead: run ',
         h('code', { text: 'npx serve' }),
-        ' ในโฟลเดอร์นี้ แล้วเปิด ',
+        ' here, then open the address it prints (usually ',
         h('code', { text: 'http://localhost:3000' }),
-        ' — บน GitHub Pages หน้านี้ทำงานได้ตามปกติครับ'
+        '). On GitHub Pages this page works normally.'
       );
       el.errorRetry.hidden = true;
       return;
@@ -183,7 +185,7 @@
 
     el.errorRetry.hidden = false;
     el.errorBody.textContent =
-      'ตอนนี้โหลดข้อมูลรองเท้าไม่ได้ ลองเช็กสัญญาณอินเทอร์เน็ตแล้วกดลองอีกครั้งดูครับ' +
+      "Couldn't load the shoes just now. Check your connection and try again." +
       (err && err.message ? ` (${err.message})` : '');
   }
 
@@ -198,12 +200,12 @@
     const sizes = [...new Set(state.shoes.map((s) => s.sizeEU))].sort((a, b) => a - b);
 
     renderChipGroup(el.brand, 'brand', [
-      { value: 'all', label: 'ทั้งหมด' },
+      { value: 'all', label: 'All brands' },
       ...brands.map((b) => ({ value: b, label: b })),
     ]);
 
     renderChipGroup(el.size, 'size', [
-      { value: 'all', label: 'ทุกไซซ์' },
+      { value: 'all', label: 'All sizes' },
       ...sizes.map((s) => ({ value: String(s), label: `EU ${s}` })),
     ]);
 
@@ -211,7 +213,7 @@
     // can only ever return zero results is a dead end.
     const usable = PRICE_BUCKETS.filter((b) => state.shoes.some((s) => b.test(s.price)));
     renderChipGroup(el.price, 'price', [
-      { value: 'all', label: 'ทุกราคา' },
+      { value: 'all', label: 'Any price' },
       ...usable.map((b) => ({ value: b.id, label: b.label })),
     ]);
   }
@@ -272,7 +274,10 @@
 
     el.reset.hidden = !filtering;
     el.count.textContent = '';
-    el.count.append('พบ ', h('strong', { text: String(visible.length) }), ' คู่');
+    el.count.append(
+      h('strong', { text: String(visible.length) }),
+      visible.length === 1 ? ' pair' : ' pairs'
+    );
 
     el.grid.textContent = '';
     if (visible.length === 0) {
@@ -292,7 +297,7 @@
       attrs: {
         src: shoe.photos[index],
         // Thai alt text: a screen-reader user here reads Thai, not filenames.
-        alt: `${shoe.brand} ${shoe.model} ไซซ์ EU ${shoe.sizeEU}`,
+        alt: `${shoe.brand} ${shoe.model}, EU ${shoe.sizeEU}`,
         loading: 'lazy',
         decoding: 'async',
         width: '600',
@@ -332,7 +337,7 @@
       text: shoe.model,
       attrs: {
         type: 'button',
-        'aria-label': `ดูรายละเอียด ${shoe.brand} ${shoe.model} ไซซ์ EU ${shoe.sizeEU} ราคา ${formatPrice(shoe.price)}`,
+        'aria-label': `View ${shoe.brand} ${shoe.model}, EU ${shoe.sizeEU}, ${formatPrice(shoe.price)}`,
       },
     });
     trigger.addEventListener('click', () => openModal(shoe, trigger));
@@ -342,7 +347,7 @@
       h('h3', { class: 'card__model' }, [trigger]),
       h('div', { class: 'card__meta' }, [
         h('span', { class: 'badge badge--size', text: `EU ${shoe.sizeEU}` }),
-        h('span', { class: 'badge badge--grade', text: `สภาพ ${shoe.condition.grade}` }),
+        h('span', { class: 'badge badge--grade', text: `Grade ${shoe.condition.grade}` }),
       ]),
       h('div', { class: 'card__foot' }, [
         h('p', { class: 'card__price', text: formatPrice(shoe.price) }),
@@ -374,7 +379,7 @@
           attrs: {
             type: 'button',
             'aria-current': String(i === 0),
-            'aria-label': `ดูรูปที่ ${i + 1}`,
+            'aria-label': `Show photo ${i + 1}`,
           },
         }, [photoImg(shoe, i, '')]);
         t.addEventListener('click', () => {
@@ -397,31 +402,31 @@
     if (sold) {
       cta = h('button', {
         class: 'btn btn--primary btn--block detail__cta',
-        text: 'ขายไปแล้ว',
+        text: 'Sold',
         attrs: { type: 'button', disabled: 'disabled' },
       });
       hint = h('p', {
         class: 'detail__hint',
-        text: 'คู่นี้ขายไปแล้วครับ ลองดูคู่อื่นที่ยังว่างอยู่ได้เลย',
+        text: 'This pair is gone. Have a look at the others.',
       });
     } else if (!SHOP.line) {
       cta = h('button', {
         class: 'btn btn--primary btn--block detail__cta',
-        text: 'ยังไม่เปิดรับสั่งซื้อ',
+        text: 'Ordering not open yet',
         attrs: { type: 'button', disabled: 'disabled' },
       });
       hint = h('p', {
         class: 'detail__hint',
-        text: 'ร้านกำลังเตรียมเปิด LINE สำหรับสั่งซื้อ เร็ว ๆ นี้ครับ',
+        text: "We're setting up LINE for orders — coming soon.",
       });
     } else {
       cta = h('a', {
         class: 'btn btn--primary btn--block detail__cta',
-        text: shoe.status === 'reserved' ? 'ทัก LINE เพื่อขอคิวถัดไป' : 'สั่งซื้อทาง LINE',
+        text: shoe.status === 'reserved' ? 'Ask about the next slot' : 'Order on LINE',
         attrs: { href: SHOP.line, target: '_blank', rel: 'noopener noreferrer' },
       });
       hint = h('p', { class: 'detail__hint' }, [
-        document.createTextNode('แจ้งรหัสนี้กับทางร้านได้เลย: '),
+        document.createTextNode('Send us this code: '),
         h('span', { class: 'detail__id', text: shoe.id }),
       ]);
     }
@@ -432,7 +437,7 @@
       h('div', { class: 'detail__meta' }, [
         statusBadge(shoe.status),
         h('span', { class: 'badge badge--size', text: `EU ${shoe.sizeEU} · US ${shoe.sizeUS}` }),
-        h('span', { class: 'badge badge--grade', text: `สภาพ ${shoe.condition.grade}` }),
+        h('span', { class: 'badge badge--grade', text: `Grade ${shoe.condition.grade}` }),
       ]),
       h('div', { class: 'detail__price-row' }, [
         h('p', { class: 'detail__price', text: formatPrice(shoe.price) }),
@@ -442,16 +447,16 @@
         shoe.originalPrice
           ? h('span', {
               class: 'detail__save',
-              text: `ถูกลง ${priceFmt.format(shoe.originalPrice - shoe.price)} บาท`,
+              text: `Save ${formatPrice(shoe.originalPrice - shoe.price)}`,
             })
           : null,
       ]),
       h('div', { class: 'detail__block' }, [
-        h('p', { class: 'detail__label', text: 'สภาพรองเท้า' }),
+        h('p', { class: 'detail__label', text: 'Condition' }),
         h('p', { class: 'detail__notes', text: shoe.condition.note }),
       ]),
       h('div', { class: 'detail__block' }, [
-        h('p', { class: 'detail__label', text: 'รายละเอียด' }),
+        h('p', { class: 'detail__label', text: 'Details' }),
         h('p', { class: 'detail__notes', text: shoe.notes }),
       ]),
       cta,
@@ -534,7 +539,7 @@
       node.textContent = SHOP.name;
     }
     // Keep the tab/SEO title in step with the name, so it lives in one place too.
-    document.title = `${SHOP.name} — รองเท้ามือสอง สภาพดี คัดมาแล้ว`;
+    document.title = `${SHOP.name} — Second-hand sneakers, checked pair by pair`;
 
     // A social link the shop doesn't have is removed, not left pointing nowhere.
     for (const node of document.querySelectorAll('[data-shop-link]')) {
@@ -566,7 +571,7 @@
   el.navToggle.addEventListener('click', () => {
     const open = el.navMenu.classList.toggle('is-open');
     el.navToggle.setAttribute('aria-expanded', String(open));
-    el.navToggle.setAttribute('aria-label', open ? 'ปิดเมนู' : 'เปิดเมนู');
+    el.navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
   });
 
   // Tapping a menu link on a phone should navigate AND put the menu away.
@@ -574,7 +579,7 @@
     link.addEventListener('click', () => {
       el.navMenu.classList.remove('is-open');
       el.navToggle.setAttribute('aria-expanded', 'false');
-      el.navToggle.setAttribute('aria-label', 'เปิดเมนู');
+      el.navToggle.setAttribute('aria-label', 'Open menu');
     });
   }
 
