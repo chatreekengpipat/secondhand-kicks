@@ -84,6 +84,18 @@
 
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --dur: 180ms;
+  /* Confident deceleration reserved for the one big move: the photo that flies
+     from a grid card into the detail view. Snappier tail than --ease so it
+     arrives decisively instead of drifting to a stop. */
+  --ease-flight: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Semantic z-index scale. Named so a new layer slots in by meaning, not by
+     out-bidding a random 999. nav 40 < modal 60 < flight 70 < skip-link 100:
+     the flying photo lands *into* the open modal, so it sits just above it. */
+  --z-nav: 40;
+  --z-modal: 60;
+  --z-flight: 70;
+  --z-skip: 100;
 }
 
 /* ---------- 2. Reset / base --------------------------------------------- */
@@ -707,6 +719,24 @@ a:hover { color: var(--accent-2-bright); }
   box-shadow: 0 16px 40px -18px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 94, 0, 0.25);
 }
 
+/* Grid ignition — the catalog's entrance. Cards rise out of a clip on the FIRST
+   populated render only: app.js adds `is-igniting`, then drops it, so filtering
+   (which re-renders) never replays the entrance on every tap. `backwards` fill
+   makes the un-animated state the FINAL state — if the animation never runs
+   (reduced motion, headless render), the cards are simply visible, never blank.
+   Only transform/opacity animate, so the whole grid composites.
+
+   Trade-off: below-the-fold cards animate on load rather than on scroll-in. An
+   IntersectionObserver would defer them, but at catalog scale (tens of cards)
+   the frames saved don't pay for the complexity — and IO re-observes fresh
+   nodes on every filter re-render, which would reintroduce the replay we just
+   designed out. First-render-only is the simpler, more honest rule. */
+.grid.is-igniting .card {
+  animation: card-rise 560ms var(--ease) backwards;
+  /* --i is capped at 14 in app.js so a long shelf can't stagger for seconds. */
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
 .card__media {
   position: relative;
   background: var(--photo-bg);
@@ -1036,6 +1066,45 @@ a:hover { color: var(--accent-2-bright); }
   font-size: 0.8125rem;
   color: var(--text-muted);
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* ---------- 9a. The flying photo (signature transition) ------------------ */
+/* One fixed element that morphs a card's photo into the detail-view photo, and
+   back again on close — the site's signature interaction. It lands INTO the
+   open modal (z-flight just above z-modal), then is removed to reveal the
+   identical real image underneath, so the handoff is seamless.
+
+   Why a clone and not the real photo: the card stays in the grid behind the
+   modal, so its own <img> can't be the thing that travels. The clone is a
+   throwaway that carries the same src along the flight path.
+
+   pointer-events:none is load-bearing — a fixed, full-photo overlay that ate
+   taps is exactly the class of bug this codebase has been bitten by before
+   (see the [hidden] note). It must never intercept a click. */
+.flight {
+  position: fixed;
+  z-index: var(--z-flight);
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--photo-bg);
+  /* Lift while airborne, so the photo reads as picked up off the shelf. Same
+     shadow alpha as the card-hover elevation (rgba(0,0,0,0.9)) — one shadow
+     colour across the system, not a new near-black. */
+  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+  opacity: 1;
+  /* REQUIRED for the FLIP math: scaling from the top-left corner is what lets a
+     single translate + scale map the origin box exactly onto the destination. */
+  transform-origin: top left;
+  transition: transform 400ms var(--ease-flight);
+  will-change: transform;
+}
+.flight img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  /* Matches .card__img so the photo sits identically at lift-off. */
+  padding: 6%;
 }
 
 /* ---------- 10. Motion --------------------------------------------------- */
