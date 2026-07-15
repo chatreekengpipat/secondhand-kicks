@@ -95,6 +95,7 @@
     shoes: [],
     filters: { brand: 'all', size: 'all', price: 'all' },
     lastFocused: null, // element to restore focus to when the modal closes
+    hasRendered: false, // gates the one-shot grid-ignition entrance
   };
 
   /* ---------- Utilities --------------------------------------------------- */
@@ -121,6 +122,89 @@
       if (child) node.appendChild(child);
     }
     return node;
+  }
+
+  // The OS "reduce motion" switch, read live (not cached) so toggling it in
+  // system settings takes effect without a reload. The signature flight is pure
+  // decoration; when this is on, the modal simply opens and closes instantly.
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  /**
+   * Fly a photo clone from one on-screen box to another — a FLIP transition,
+   * and the site's signature move (a card's photo morphing into the detail
+   * view, and back on close).
+   *
+   * FLIP = First, Last, Invert, Play. The clone is placed at its DESTINATION
+   * box (`toRect`), then transformed back onto the ORIGIN box (`fromRect`);
+   * animating that inverse transform away slides and scales it from origin to
+   * destination. Because only `transform` runs, no frame ever touches layout —
+   * a full-screen photo can travel on a mid-range phone without dropping a
+   * frame. Resolves once the clone has been cleaned up.
+   *
+   * @param {DOMRect} fromRect where the photo starts (viewport coords)
+   * @param {DOMRect} toRect   where it lands (viewport coords)
+   * @param {string}  src      the image to show mid-flight
+   * @param {{onLand?: () => void}} [opts] onLand fires the instant it arrives,
+   *        before the clone cross-fades out — used to reveal the real image.
+   */
+  function flyPhoto(fromRect, toRect, src, opts = {}) {
+    return new Promise((resolve) => {
+      const clone = h('div', { class: 'flight' });
+      const img = h('img', { attrs: { src, alt: '' } });
+      // Even the throwaway clone gets the placeholder fallback: a 404 mid-flight
+      // must not flash the browser's broken-image glyph across the screen.
+      img.addEventListener('error', function onErr() {
+        img.removeEventListener('error', onErr);
+        img.src = PLACEHOLDER;
+      });
+      clone.appendChild(img);
+
+      // Position at the destination, then invert onto the origin.
+      clone.style.top = `${toRect.top}px`;
+      clone.style.left = `${toRect.left}px`;
+      clone.style.width = `${toRect.width}px`;
+      clone.style.height = `${toRect.height}px`;
+      const dx = fromRect.left - toRect.left;
+      const dy = fromRect.top - toRect.top;
+      const sx = fromRect.width / toRect.width;
+      const sy = fromRect.height / toRect.height;
+      clone.style.transform = `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})`;
+
+      document.body.appendChild(clone);
+
+      // Two rAFs: the first commits the inverted start state, the second flips
+      // to identity so the CSS transition actually has two states to animate
+      // between. One rAF is not always enough across engines.
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        clone.style.transform = 'translate(0, 0) scale(1)';
+      }));
+
+      let settled = false;
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        clone.remove();
+        resolve();
+      };
+
+      clone.addEventListener('transitionend', function onArrive(e) {
+        if (e.propertyName !== 'transform') return;
+        clone.removeEventListener('transitionend', onArrive);
+        if (opts.onLand) opts.onLand();
+        // Cross-fade the clone out over the real image now showing underneath.
+        // The card's photo is padded 6%; the detail photo fills more — the fade
+        // turns that sub-pixel difference into a soft settle, never a snap.
+        clone.style.transition = 'opacity 150ms linear';
+        void clone.offsetWidth; // reflow so the opacity change is a transition
+        clone.style.opacity = '0';
+        clone.addEventListener('transitionend', cleanup, { once: true });
+        setTimeout(cleanup, 260); // safety if the opacity end event is missed
+      });
+
+      // Absolute backstop: never leave an orphaned clone if a transition is
+      // interrupted (e.g. the tab is backgrounded mid-flight).
+      setTimeout(cleanup, 950);
+    });
   }
 
   /** Show exactly one of the mutually-exclusive page states. */
@@ -286,8 +370,22 @@
     }
     setState('results');
 
+    // Ignite the grid on the FIRST populated render only, then drop the flag so
+    // filtering (which re-renders the whole grid) never replays the entrance on
+    // every tap. See the `.grid.is-igniting` rule in style.css for the why.
+    const igniting = !state.hasRendered;
+    el.grid.classList.toggle('is-igniting', igniting);
+    state.hasRendered = true;
+
     const frag = document.createDocumentFragment();
-    for (const shoe of visible) frag.appendChild(card(shoe));
+    visible.forEach((shoe, i) => {
+      const node = card(shoe);
+      // --i drives the stagger delay, capped so a long shelf can't ripple for
+      // seconds. It's data (this card's place in line), which is why it rides on
+      // the element rather than living as a pile of :nth-child rules.
+      if (igniting) node.style.setProperty('--i', String(Math.min(i, 14)));
+      frag.appendChild(node);
+    });
     el.grid.appendChild(frag);
   }
 
@@ -474,6 +572,15 @@
 
   function openModal(shoe, opener) {
     state.lastFocused = opener || document.activeElement;
+
+    // Measure the tapped card's photo BEFORE building or locking anything, so
+    // the flight starts from exactly where the buyer's finger landed.
+    const originCard = state.lastFocused && state.lastFocused.closest
+      ? state.lastFocused.closest('.card')
+      : null;
+    const originMedia = originCard ? originCard.querySelector('.card__media') : null;
+    const fromRect = originMedia ? originMedia.getBoundingClientRect() : null;
+
     el.modalBody.textContent = '';
     el.modalBody.appendChild(detail(shoe));
     el.modal.hidden = false;
@@ -481,23 +588,72 @@
     // end carries on scrolling the catalog underneath it.
     document.body.style.overflow = 'hidden';
 
+    // Focus and keyboard wiring happen immediately and unconditionally — the
+    // flight is decoration layered on top, never a gate on the modal working.
     const first = el.modalDialog.querySelector(FOCUSABLE);
     (first || el.modalDialog).focus();
-
     document.addEventListener('keydown', onModalKeydown);
+
+    // Signature transition: morph the tapped photo into the detail image slot.
+    // Skipped entirely under reduced motion, or if we couldn't measure a source
+    // (e.g. opened by keyboard from somewhere without a card media box).
+    if (!reduceMotion.matches && fromRect) {
+      const mainImg = el.modalDialog.querySelector('.detail__main img');
+      const toRect = mainImg ? mainImg.getBoundingClientRect() : null;
+      if (toRect && toRect.width > 0) {
+        // Hold the real image invisible (but laid out) until the clone lands on
+        // it, so it doesn't sit at full size behind the shrunken flying clone.
+        mainImg.style.visibility = 'hidden';
+        flyPhoto(fromRect, toRect, mainImg.src, {
+          onLand: () => { mainImg.style.visibility = ''; },
+        });
+      }
+    }
   }
 
   function closeModal() {
     if (el.modal.hidden) return;
+
+    // Capture what the reverse flight needs BEFORE tearing the modal down. We
+    // read the currently-shown photo (the buyer may have switched thumbnails)
+    // and the card it should return to — but only if that card is still on
+    // screen; a filter change while the modal was open can have removed it.
+    let reverseCard = null;
+    let reverseFrom = null;
+    let reverseSrc = null;
+    if (!reduceMotion.matches) {
+      const mainImg = el.modalDialog.querySelector('.detail__main img');
+      reverseCard = state.lastFocused && state.lastFocused.closest
+        ? state.lastFocused.closest('.card')
+        : null;
+      if (mainImg && reverseCard) {
+        reverseFrom = mainImg.getBoundingClientRect();
+        reverseSrc = mainImg.src;
+      }
+    }
+
     el.modal.hidden = true;
     el.modalBody.textContent = '';
     document.body.style.overflow = '';
     document.removeEventListener('keydown', onModalKeydown);
     // Return focus where it came from, or a keyboard user is dumped at the top
-    // of the document and has to tab all the way back to where they were.
+    // of the document and has to tab all the way back to where they were. This
+    // is immediate and independent of the decorative flight below.
     if (state.lastFocused && document.contains(state.lastFocused)) {
       state.lastFocused.focus();
     }
+
+    // Reverse flight: the photo returns to its card on the shelf. Measured after
+    // the page is unlocked, so it lands on the card's real resting position.
+    if (reverseCard && reverseFrom) {
+      const media = reverseCard.querySelector('.card__media');
+      // offsetParent === null means the card is display:none or detached — don't
+      // fly a photo to a box that isn't visible.
+      if (media && media.offsetParent !== null) {
+        flyPhoto(reverseFrom, media.getBoundingClientRect(), reverseSrc);
+      }
+    }
+
     state.lastFocused = null;
   }
 
