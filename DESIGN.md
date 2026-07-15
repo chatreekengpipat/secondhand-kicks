@@ -27,6 +27,7 @@ elevation:
   card: 0 16px 40px -18px rgba(0,0,0,0.9)
   glow: 0 0 0 1px rgba(255,94,0,0.5), 0 6px 28px -6px rgba(255,94,0,0.55)
   glowStrong: 0 0 0 1px rgba(255,94,0,0.7), 0 10px 38px -6px rgba(255,94,0,0.75)
+  flight: 0 30px 60px -20px rgba(0,0,0,0.9)
 ---
 
 # Electric Night
@@ -181,6 +182,27 @@ resolve to none, transitions collapse, and smooth scrolling is turned off.
 - **Modal.** A bottom sheet on phones (thumb-reachable), a centred dialog from 768px up.
   `aria-modal`, focus moves in on open, Tab is trapped, Escape closes, focus returns to
   the card that opened it.
+- **Photo lift — the signature transition.** Opening and closing a shoe is the site's one
+  big move. On tap, the tapped card's photo detaches, lifts, and expands into the detail
+  view's photo; on close it flies back to its card on the shelf. It is a FLIP (First,
+  Last, Invert, Play): a single `position: fixed` clone is placed at its destination box,
+  inverted back onto the origin box, and released — so **one composited `transform`**
+  carries a full-screen photo across the page without ever touching layout, which is what
+  lets it stay smooth on a mid-range Android.
+
+  The move chose the *photo* on purpose. The `#F2F2F2` plate is the star of this system,
+  so the thing that travels is the plate. Three guards keep it honest: the flying clone is
+  `pointer-events: none` (it must **never** swallow a tap — the exact trap the modal fell
+  into, see Don'ts); the real detail image is held invisible until the clone lands, then
+  cross-fades in so the card's 6% photo padding never snaps against the detail photo; and
+  focus, scroll-lock and keyboard wiring happen immediately, independent of the flight, so
+  the modal is fully usable the instant it opens. Skipped entirely under reduced motion —
+  the modal just opens.
+
+- **Catalog entrance (grid ignition).** Cards mask-rise in a capped stagger on the **first**
+  populated render only. Filtering re-renders the grid but never replays the entrance: a
+  fresh animation on every chip tap is fatigue, not delight. Because the un-animated state
+  is the final state, a reduced-motion or headless render simply shows the cards.
 - **States.** Loading, error, and empty are three mutually exclusive blocks. The empty
   state tells the buyer what to do next ("Try widening your search"), and the `file://`
   error state explains the browser restriction and gives the exact command to fix it.
@@ -192,8 +214,19 @@ one-shot entrance or a hover response. Nothing loops, because a continuous anima
 keeps the compositor awake for as long as the tab is open and spends battery to
 decorate a page whose job is to show shoes.
 
+Four moments spend that budget, and no more: the **hero quote** entrance, the **grid
+ignition**, the **card hover** lift, and the **photo lift**. The first two are one-shot
+entrances (the grid ignition fires once, on the first render — see Components). The photo
+lift is a one-shot *response* to a tap — a FLIP transition, not a loop — so it obeys the
+rule exactly: it arrives when the buyer acts, then it is gone. It gets the system's one
+bespoke easing, `--ease-flight` (`cubic-bezier(0.16, 1, 0.3, 1)`), a confident
+deceleration reserved for that single move so the photo lands decisively rather than
+drifting to a stop.
+
 Only `transform` and `opacity` are animated. Both are composited; anything else
 (`width`, `top`, `filter`, `box-shadow` on a loop) forces layout or paint every frame.
+The photo lift holds to this too: it moves a clone with `transform` alone and cross-fades
+it with `opacity`, never animating the size of a real, laid-out element.
 
 **`prefers-reduced-motion: reduce` collapses all of it** — and note that zeroing the
 *duration* is not enough on its own. The hero words use `animation-fill-mode:
@@ -201,6 +234,11 @@ backwards`, which holds the hidden from-state for the whole `animation-delay`; l
 an 800ms delay in place with a zeroed duration and the quote sits **invisible** and
 then pops, which is precisely the jolt reduced-motion exists to prevent. The delay is
 zeroed too.
+
+The grid ignition survives the same way — its cards' un-animated state *is* their final
+state (`backwards` fill again), so a reduced-motion or headless render shows them, never
+blank. The photo lift is handled in JS, not CSS: under reduced motion it is skipped
+outright, and the modal simply opens and closes.
 
 ## Do's and Don'ts
 
@@ -214,6 +252,9 @@ zeroed too.
 
 - Do keep `[hidden] { display: none !important; }` in the reset. It looks redundant and
   is not — see Don'ts.
+- Do keep any full-viewport or floating overlay `pointer-events: none` unless it is meant
+  to be clicked. The photo-lift clone follows this rule; a fixed overlay that eats taps is
+  the same class of bug as the un-hidden modal below.
 
 **Don't**
 - Don't mix the two accents in one element. An orange button with a blue border is a
@@ -222,7 +263,9 @@ zeroed too.
 - Don't add particles, scanlines, animated grids, floating shapes or auto-rotating hero
   text. They were considered and rejected — they cost frames on mid-range Android and
   buy nothing a buyer wants.
-- Don't animate anything on a loop. Entrances and hovers only.
+- Don't animate anything on a loop. Entrances, hovers, and one-shot tap responses only.
+- Don't replay the grid ignition on filter. It fires once, on the first render; a fresh
+  stagger on every chip tap is motion fatigue.
 - Don't signal status with colour alone. `sold` also gets grayscale and a text ribbon.
 - Don't introduce a third accent. If something needs to stand out and is neither
   commerce nor navigation, it is probably status — and status is amber.
